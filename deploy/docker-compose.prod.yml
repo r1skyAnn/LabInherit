@@ -1,0 +1,4 @@
+version: "1.0"
+# This file is reserved for the production-style compose stack
+# (nginx + static frontend + uvicorn backend + worker + external MySQL).
+# Implemented in S6 alongside the deployment guide.

@@ -1,0 +1,31 @@
+:root {
+  --lab-bg: #fafbfc;
+  --lab-text: #1f2329;
+  --lab-muted: #8f959e;
+  --lab-primary: #409eff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--lab-text);
+  background: var(--lab-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--lab-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,90 @@
+# ============ Python / Backend ============
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# ============ Node / Frontend ============
+node_modules/
+.pnpm-store/
+.pnp/
+.pnp.js
+.yarn/install-state.gz
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/coverage/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ============ IDE / Editor ============
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+*.sublime-project
+*.sublime-workspace
+
+# ============ OS ============
+.AppleDouble
+.LSOverride
+Icon?
+ehthumbs.db
+Desktop.ini
+
+# ============ Project-specific ============
+# Local environment overrides
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+deploy/.data/
+deploy/.env
+
+# Database dumps
+*.sql
+*.sql.gz
+*.dump
+
+# Logs
+logs/
+*.log
+
+# Test artifacts
+.playwright/
+playwright-report/
+test-results/
+
+# Build artifacts
+build/
+dist/
+*.tsbuildinfo
+/backend/uploads/

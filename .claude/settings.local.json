@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --version)",
+      "Bash(uv --version)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(pnpm install *)",
+      "Bash(npx vite *)",
+      "Bash(pnpm dev *)",
+      "Bash(ls -la .venv)",
+      "Bash(which uv *)",
+      "Bash(which python *)",
+      "Bash(npm run *)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill *)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(echo \"/backend/uploads/\")",
+      "Bash(git add *)",
+      "Bash(git commit -m 'LabInherit v1.0 — 实验室知识传承平台 *)"
+    ]
+  }
+}
