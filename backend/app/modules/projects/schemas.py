@@ -18,6 +18,8 @@ class ProjectCreate(BaseModel):
     zip_url: str | None = Field(default=None, max_length=512)
     started_at: datetime | None = None
     ended_at: datetime | None = None
+    is_public: bool = Field(default=True)
+    allowed_viewer_ids: list[int] = Field(default_factory=list)
 
 
 class ProjectUpdate(BaseModel):
@@ -32,6 +34,8 @@ class ProjectUpdate(BaseModel):
     zip_url: str | None = Field(None, max_length=512)
     started_at: datetime | None = None
     ended_at: datetime | None = None
+    is_public: bool | None = None
+    allowed_viewer_ids: list[int] | None = None
 
 
 class ProjectOut(BaseModel):
@@ -50,6 +54,7 @@ class ProjectOut(BaseModel):
     ended_at: datetime | None
     created_by: int
     creator_display_name: str | None = None
+    is_public: bool
     created_at: datetime
     updated_at: datetime
 

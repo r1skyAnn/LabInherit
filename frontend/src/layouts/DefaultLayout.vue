@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { notificationsApi, type NotificationOut } from '@/api/notifications'
 import { notesApi, type NoteOut } from '@/api/notes'
 import { ElMessage } from 'element-plus'
-import { Bell, Search } from '@element-plus/icons-vue'
+import { Bell, Search, Medal } from '@element-plus/icons-vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -134,6 +134,11 @@ const navItems = computed<NavItem[]>(() => {
     { path: '/showcase', title: '成果展示墙', icon: 'PictureFilled' },
     { path: '/announcements', title: '公告中心', icon: 'BellFilled' },
   ]
+  const userStatus = auth.user?.status
+  const isGraduated = userStatus === 'graduated' || userStatus === 'archived'
+  if (isGraduated || auth.isAdmin) {
+    items.push({ path: '/alumni', title: '毕业人员专区', icon: 'Medal' })
+  }
   if (auth.isAdmin) {
     items.push(
       { path: '/members', title: '成员列表', icon: 'User' },

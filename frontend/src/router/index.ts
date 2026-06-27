@@ -111,6 +111,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/MembersList.vue'),
         meta: { title: '成员列表', requiredRoles: ['admin', 'owner'] },
       },
+      {
+        path: 'alumni',
+        name: 'alumni',
+        component: () => import('@/views/AlumniPosts.vue'),
+        meta: { title: '毕业人员专区' },
+      },
       // Admin routes
       {
         path: 'admin/dashboard',

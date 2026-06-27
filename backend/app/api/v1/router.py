@@ -20,6 +20,7 @@ from app.modules.notifications.router import router as notifications_router
 from app.modules.admin.router import router as admin_router
 from app.modules.showcase.router import router as showcase_router
 from app.modules.guides.router import router as guides_router
+from app.modules.alumni_posts.router import router as alumni_posts_router
 from app.api.v1.search import router as search_router
 
 api_v1_router = APIRouter()
@@ -39,4 +40,5 @@ api_v1_router.include_router(notifications_router)
 api_v1_router.include_router(admin_router)
 api_v1_router.include_router(showcase_router)
 api_v1_router.include_router(guides_router)
+api_v1_router.include_router(alumni_posts_router)
 api_v1_router.include_router(search_router)

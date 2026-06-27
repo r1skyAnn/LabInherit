@@ -106,6 +106,9 @@ onMounted(() => { load(); loadAsks() })
             <el-tag size="small" :type="priorityMap[project.priority]?.type as any" effect="plain">
               {{ priorityMap[project.priority]?.label }}优先级
             </el-tag>
+            <el-tag size="small" :type="project.is_public ? 'success' : 'warning'" effect="plain">
+              {{ project.is_public ? '公开' : '私有' }}
+            </el-tag>
           </div>
         </div>
         <p v-if="project.description" class="hero-desc">{{ project.description }}</p>

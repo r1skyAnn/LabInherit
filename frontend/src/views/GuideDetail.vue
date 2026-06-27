@@ -5,7 +5,7 @@ import { guidesApi, type GuideOut } from '@/api/guides'
 import { projectsApi, type ProjectOut } from '@/api/projects'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
 import MarkdownRenderer from '@/components/notes/MarkdownRenderer.vue'
 
 const route = useRoute()
@@ -20,17 +20,36 @@ const activeTag = ref<string>('')
 const showDialog = ref(false)
 const editing = ref<GuideOut | null>(null)
 
-const tags = computed(() => {
-  const seen = new Set<string>()
-  const result: { value: string; label: string }[] = [{ value: '', label: '全部' }]
+interface TagGroup {
+  tag: string
+  label: string
+  guides: GuideOut[]
+}
+
+const tagGroups = computed<TagGroup[]>(() => {
+  const map = new Map<string, TagGroup>()
   for (const g of guides.value) {
-    if (!seen.has(g.tag)) {
-      seen.add(g.tag)
-      result.push({ value: g.tag, label: g.tag })
+    if (!map.has(g.tag)) {
+      map.set(g.tag, { tag: g.tag, label: g.tag, guides: [] })
     }
+    map.get(g.tag)!.guides.push(g)
   }
-  return result
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.tag === 'intro') return -1
+    if (b.tag === 'intro') return 1
+    return 0
+  })
 })
+
+const expandedTags = ref<Set<string>>(new Set(['intro']))
+
+function toggleTag(tag: string) {
+  if (expandedTags.value.has(tag)) {
+    expandedTags.value.delete(tag)
+  } else {
+    expandedTags.value.add(tag)
+  }
+}
 
 function canCreate() {
   const u = auth.user
@@ -74,6 +93,10 @@ async function loadGuides() {
       } else {
         current.value = guides.value[0]
       }
+      // Auto-expand the tag group that contains the current guide
+      if (current.value) {
+        expandedTags.value.add(current.value.tag)
+      }
     }
   } catch { guides.value = [] }
 }
@@ -99,6 +122,7 @@ async function loadContent(slug?: string) {
 }
 
 function selectGuide(g: GuideOut) {
+  expandedTags.value.add(g.tag)
   router.replace(`/guides/${g.slug}`)
 }
 
@@ -170,27 +194,52 @@ onMounted(async () => {
 
 <template>
   <div class="guide-page">
-    <!-- Left sidebar -->
+    <!-- Left sidebar with accordion -->
     <aside class="guide-sidebar">
+      <!-- Tag filter tabs -->
       <div class="guide-tags">
         <div
-          v-for="t in tags" :key="t.value"
+          v-for="t in [{ value: '', label: '全部' }, ...tagGroups.map(g => ({ value: g.tag, label: g.label }))]"
+          :key="t.value"
           class="tag-tab"
           :class="{ active: activeTag === t.value }"
           @click="activeTag = t.value"
         >{{ t.label }}</div>
       </div>
 
+      <!-- Accordion groups -->
       <div class="guide-list">
-        <div v-if="guides.length === 0" class="g-empty">暂无内容</div>
-        <div
-          v-for="g in guides" :key="g.id"
-          class="guide-item"
-          :class="{ active: current?.id === g.id }"
-          @click="selectGuide(g)"
-        >
-          <span class="gi-pin" v-if="g.is_pinned">📌</span>
-          <span class="gi-title">{{ g.title }}</span>
+        <div v-if="tagGroups.length === 0" class="g-empty">暂无内容</div>
+
+        <div v-for="group in tagGroups" :key="group.tag" class="accordion-group">
+          <!-- Group header -->
+          <div
+            class="accordion-header"
+            :class="{ active: expandedTags.has(group.tag) }"
+            @click="toggleTag(group.tag)"
+          >
+            <el-icon class="accordion-arrow">
+              <ArrowDown v-if="expandedTags.has(group.tag)" />
+              <ArrowRight v-else />
+            </el-icon>
+            <span class="accordion-title">{{ group.label }}</span>
+            <el-tag size="small" effect="plain" style="margin-left:auto; margin-right:0.5rem">
+              {{ group.guides.length }}
+            </el-tag>
+          </div>
+
+          <!-- Group items (collapsible) -->
+          <div v-if="expandedTags.has(group.tag)" class="accordion-items">
+            <div
+              v-for="g in group.guides" :key="g.id"
+              class="guide-item"
+              :class="{ active: current?.id === g.id }"
+              @click="selectGuide(g)"
+            >
+              <span class="gi-pin" v-if="g.is_pinned">📌</span>
+              <span class="gi-title">{{ g.title }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -301,12 +350,50 @@ onMounted(async () => {
 
 .guide-list { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 .g-empty { text-align: center; color: var(--lab-muted); padding: 1.5rem 0; font-size: 0.85rem; }
-.guide-item {
-  padding: 0.5rem 0.5rem; border-radius: 6px; cursor: pointer;
-  font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem;
-  transition: background 0.15s;
+
+/* Accordion */
+.accordion-group {
+  margin-bottom: 0.25rem;
 }
-.guide-item:hover { background: var(--el-fill-color-light); }
+.accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  transition: background 0.15s;
+  user-select: none;
+}
+.accordion-header:hover { background: var(--el-fill-color-light); }
+.accordion-arrow {
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+  color: var(--lab-muted);
+  flex-shrink: 0;
+}
+.accordion-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.accordion-items {
+  padding-left: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Guide items */
+.guide-item {
+  padding: 0.4rem 0.5rem; border-radius: 6px; cursor: pointer;
+  font-size: 0.84rem; display: flex; align-items: center; gap: 0.3rem;
+  transition: background 0.15s;
+  color: var(--el-text-color-regular);
+}
+.guide-item:hover { background: var(--el-fill-color-light); color: var(--el-text-color-primary); }
 .guide-item.active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-weight: 600; }
 .gi-pin { font-size: 0.7rem; flex-shrink: 0; }
 .gi-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

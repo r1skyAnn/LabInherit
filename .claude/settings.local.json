@@ -19,7 +19,9 @@
       "Bash(git config *)",
       "Bash(echo \"/backend/uploads/\")",
       "Bash(git add *)",
-      "Bash(git commit -m 'LabInherit v1.0 — 实验室知识传承平台 *)"
+      "Bash(git commit -m 'LabInherit v1.0 — 实验室知识传承平台 *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }

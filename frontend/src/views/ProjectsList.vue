@@ -71,7 +71,7 @@ onMounted(load)
           <el-option label="已完成" value="completed" />
           <el-option label="已废弃" value="abandoned" />
         </el-select>
-        <el-button v-if="auth.user?.status !== 'graduated'" type="primary" @click="openCreate">+ 新建项目</el-button>
+        <el-button v-if="auth.user?.status === 'active'" type="primary" @click="openCreate">+ 新建项目</el-button>
       </div>
     </div>
 

@@ -102,7 +102,7 @@ async def decide(
         user_result = await db.execute(select(User).where(User.id == entry.user_id))
         user = user_result.scalar_one_or_none()
         if user is not None:
-            user.status = UserStatus.DISABLED.value
+            user.status = UserStatus.ARCHIVED.value
     else:
         raise ConflictError("action 必须是 approve 或 reject")
 

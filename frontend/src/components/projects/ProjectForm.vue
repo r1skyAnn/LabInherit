@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { projectsApi, type ProjectOut } from '@/api/projects'
 import { categoriesApi, type CategoryOut } from '@/api/categories'
+import { membersApi, type MemberOut } from '@/api/members'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
@@ -16,6 +17,8 @@ const emit = defineEmits<{
 const loading = ref(false)
 const formRef = ref()
 const categories = ref<CategoryOut[]>([])
+const members = ref<MemberOut[]>([])
+const membersLoading = ref(false)
 
 const isEdit = computed(() => !!props.project)
 
@@ -31,6 +34,8 @@ const defaultForm = () => ({
   zip_url: props.project?.zip_url ?? '',
   started_at: props.project?.started_at ?? '',
   ended_at: props.project?.ended_at ?? '',
+  is_public: props.project?.is_public ?? true,
+  allowed_viewer_ids: [] as number[],
 })
 
 const form = ref(defaultForm())
@@ -54,6 +59,15 @@ async function loadCategories() {
   try {
     categories.value = (await categoriesApi.list()).data.items
   } catch {}
+}
+
+async function loadMembers() {
+  membersLoading.value = true
+  try {
+    const resp = await membersApi.list({ page_size: 500 })
+    members.value = resp.data.items.filter(m => m.status === 'active')
+  } catch {}
+  finally { membersLoading.value = false }
 }
 
 async function submit() {
@@ -81,7 +95,10 @@ async function submit() {
   }
 }
 
-onMounted(loadCategories)
+onMounted(() => {
+  loadCategories()
+  loadMembers()
+})
 </script>
 
 <template>
@@ -182,6 +199,40 @@ onMounted(loadCategories)
       </el-col>
     </el-row>
 
+    <el-form-item label="可见性">
+      <div class="visibility-section">
+        <el-radio-group v-model="form.is_public">
+          <el-radio :value="true">公开</el-radio>
+          <el-radio :value="false">私有</el-radio>
+        </el-radio-group>
+        <p class="visibility-hint">
+          公开：所有成员可见<br>
+          私有：仅创建人和指定成员可见
+        </p>
+        <div v-if="!form.is_public" class="viewer-select">
+          <el-form-item label="指定可见成员" label-width="100px" style="margin-bottom:0">
+            <el-select
+              v-model="form.allowed_viewer_ids"
+              multiple
+              filterable
+              placeholder="选择可见成员"
+              style="width: 100%"
+              :loading="membersLoading"
+              collapse-tags
+              collapse-tags-tooltip
+            >
+              <el-option
+                v-for="m in members"
+                :key="m.id"
+                :label="m.display_name"
+                :value="m.id"
+              />
+            </el-select>
+          </el-form-item>
+        </div>
+      </div>
+    </el-form-item>
+
     <el-form-item class="form-actions">
       <el-button @click="emit('cancel')">取消</el-button>
       <el-button type="primary" :loading="loading" @click="submit">
@@ -194,4 +245,21 @@ onMounted(loadCategories)
 <style scoped>
 .project-form { padding: 0.5rem 0.5rem 0; }
 .form-actions { margin-bottom: 0; display: flex; justify-content: flex-end; gap: 0.75rem; }
+.visibility-section {
+  background: var(--el-fill-color-light);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+}
+.visibility-hint {
+  font-size: 0.75rem;
+  color: var(--lab-muted);
+  margin: 0.4rem 0 0;
+  line-height: 1.5;
+}
+.viewer-select {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
 </style>

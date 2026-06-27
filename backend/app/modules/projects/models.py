@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, TimestampMixin
@@ -59,9 +59,13 @@ class Project(Base, TimestampMixin):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     category: Mapped["Category | None"] = relationship("Category")
     creator: Mapped["User"] = relationship("User")
+    allowed_viewers: Mapped[list["ProjectViewer"]] = relationship(
+        "ProjectViewer", back_populates="project", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -78,3 +82,27 @@ class Project(Base, TimestampMixin):
 
     def is_active(self) -> bool:
         return self.status == ProjectStatus.ACTIVE.value
+
+
+class ProjectViewer(Base):
+    """Users allowed to view a private project."""
+    __tablename__ = "project_viewers"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    project_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    project: Mapped["Project"] = relationship("Project", back_populates="allowed_viewers")
+
+    __table_args__ = (
+        Index("ix_project_viewers_unique", "project_id", "user_id", unique=True),
+    )

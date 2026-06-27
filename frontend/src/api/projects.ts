@@ -12,6 +12,8 @@ export interface ProjectCreate {
   zip_url?: string | null
   started_at?: string | null
   ended_at?: string | null
+  is_public?: boolean
+  allowed_viewer_ids?: number[]
 }
 
 export interface ProjectUpdate {
@@ -26,6 +28,8 @@ export interface ProjectUpdate {
   zip_url?: string | null
   started_at?: string | null
   ended_at?: string | null
+  is_public?: boolean
+  allowed_viewer_ids?: number[]
 }
 
 export interface ProjectOut {
@@ -44,6 +48,7 @@ export interface ProjectOut {
   ended_at: string | null
   created_by: number
   creator_display_name: string | null
+  is_public: boolean
   created_at: string
   updated_at: string
 }

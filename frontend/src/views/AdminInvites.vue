@@ -52,8 +52,20 @@ async function doRevoke(invite: InviteOut) {
 }
 
 function copyCode(code: string) {
-  navigator.clipboard.writeText(code)
-  ElMessage.success('已复制到剪贴板')
+  try {
+    navigator.clipboard.writeText(code)
+    ElMessage.success('已复制到剪贴板')
+  } catch {
+    // Fallback for non-HTTPS
+    const ta = document.createElement('textarea')
+    ta.value = code
+    ta.style.position = 'fixed'; ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    ElMessage.success('已复制到剪贴板')
+  }
 }
 
 onMounted(load)
