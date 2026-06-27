@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import CurrentUser, require_member_or_above
+from app.core.deps import CurrentUser, require_active_member
 from app.db.session import get_db
 from app.modules.categories import service
 from app.modules.categories.schemas import (
@@ -59,7 +59,7 @@ def _tree_to_outs(nodes: list[dict]) -> list[CategoryOut]:
 
 @router.post("", response_model=CategoryOut, summary="创建分类")
 async def create_category(
-    _: Annotated[User, Depends(require_member_or_above)],
+    _: Annotated[User, Depends(require_active_member)],
     payload: CategoryCreate,
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -88,14 +88,14 @@ async def get_category(
 
 @router.patch("/{category_id}", response_model=CategoryOut, summary="更新分类")
 async def update_category(
-    _: Annotated[User, Depends(require_member_or_above)],
+    _: Annotated[User, Depends(require_active_member)],
     category_id: int,
     payload: CategoryUpdate,
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CategoryOut:
     cat = await service.update_category(
-        db, category_id, user.id, user.is_admin_or_above(),
+        db, category_id, user.id, user.is_owner(),
         payload.model_dump(exclude_unset=True),
     )
     return _cat_to_out(cat)
@@ -103,10 +103,10 @@ async def update_category(
 
 @router.delete("/{category_id}", summary="删除分类")
 async def delete_category(
-    _: Annotated[User, Depends(require_member_or_above)],
+    _: Annotated[User, Depends(require_active_member)],
     category_id: int,
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_category(db, category_id, user.id, user.is_admin_or_above())
+    await service.delete_category(db, category_id, user.id, user.is_owner())
     return {"detail": "分类已删除"}

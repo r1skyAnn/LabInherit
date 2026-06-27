@@ -55,7 +55,6 @@ function canCreate() {
   const u = auth.user
   if (!u) return false
   if (u.role === 'owner') return true
-  if (u.role === 'admin') return true
   if (u.status === 'graduated') return true
   const ey = u.profile?.enrollment_year
   if (ey && new Date().getFullYear() - ey >= 2) return true
@@ -66,7 +65,6 @@ function canUpdate() {
   const u = auth.user
   if (!u) return false
   if (u.role === 'owner') return true
-  if (u.role === 'admin') return true
   const ey = u.profile?.enrollment_year
   if (ey && new Date().getFullYear() - ey >= 2) return true
   return false

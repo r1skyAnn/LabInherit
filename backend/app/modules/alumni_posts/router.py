@@ -44,12 +44,12 @@ async def create_alumni_post(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AlumniPostOut:
-    # Allow graduates/alumni OR owner/admin to create posts
+    # Only graduates or owner can create posts
     is_graduated = user.status in (UserStatus.GRADUATED.value, UserStatus.ARCHIVED.value)
-    is_privileged = user.role in (UserRole.OWNER.value, UserRole.ADMIN.value)
-    if not is_graduated and not is_privileged:
+    is_owner = user.role == UserRole.OWNER.value
+    if not is_graduated and not is_owner:
         from app.core.exceptions import PermissionDeniedError
-        raise PermissionDeniedError("只有毕业生、导师或管理员可以发布")
+        raise PermissionDeniedError("只有毕业生或导师可以发布")
     post = await service.create_alumni_post(
         db,
         author_id=user.id,
@@ -91,7 +91,7 @@ async def update_alumni_post(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AlumniPostOut:
     post = await service.update_alumni_post(
-        db, post_id, user.id, user.is_admin_or_above(), payload.model_dump(exclude_unset=True)
+        db, post_id, user.id, user.is_owner(), payload.model_dump(exclude_unset=True)
     )
     return _build_out(post)
 
@@ -102,5 +102,5 @@ async def delete_alumni_post(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_alumni_post(db, post_id, user.id, user.is_admin_or_above())
+    await service.delete_alumni_post(db, post_id, user.id, user.is_owner())
     return {"detail": "帖子已删除"}

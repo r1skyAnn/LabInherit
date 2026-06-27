@@ -117,11 +117,11 @@ async def update_category(
     db: AsyncSession,
     category_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Category:
     category = await get_category(db, category_id)
-    if category.created_by != user_id and not is_admin:
+    if category.created_by != user_id and not is_owner:
         raise PermissionDeniedError("只有分类创建者可以修改")
 
     old_path = category.path
@@ -183,10 +183,10 @@ async def delete_category(
     db: AsyncSession,
     category_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     category = await get_category(db, category_id)
-    if category.created_by != user_id and not is_admin:
+    if category.created_by != user_id and not is_owner:
         raise PermissionDeniedError("只有分类创建者可以删除")
     await db.delete(category)
     await db.commit()

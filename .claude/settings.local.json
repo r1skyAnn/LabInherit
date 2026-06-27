@@ -22,7 +22,8 @@
       "Bash(git commit -m 'LabInherit v1.0 — 实验室知识传承平台 *)",
       "Bash(git remote *)",
       "Bash(git push *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)"
     ]
   }
 }

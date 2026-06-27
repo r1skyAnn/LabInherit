@@ -61,7 +61,7 @@ function isCommentAuthor(c: CommentOut) {
 }
 
 function canModifyStatus() {
-  return isAuthor() || auth.isAdmin
+  return isAuthor() || auth.isOwner
 }
 
 function formatDate(d: string) {
@@ -287,7 +287,7 @@ onMounted(() => {
             <el-button @click="handleLike">👍 {{ note.like_count }}</el-button>
             <span class="comment-count-badge">💬 {{ note.comment_count }}</span>
           </div>
-          <div class="footer-right" v-if="isAuthor() || auth.isAdmin">
+          <div class="footer-right" v-if="isAuthor() || auth.isOwner">
             <el-button @click="handleTogglePin">
               {{ note.is_pinned ? '取消置顶' : '置顶' }}
             </el-button>
@@ -385,7 +385,7 @@ onMounted(() => {
                   </template>
                 </el-dropdown>
               </template>
-              <template v-if="auth.isAdmin && !isCommentAuthor(c)">
+              <template v-if="auth.isOwner && !isCommentAuthor(c)">
                 <el-button text size="small" type="danger" @click="handleDeleteComment(c)">删除</el-button>
               </template>
             </div>
@@ -404,7 +404,7 @@ onMounted(() => {
                     text size="small"
                     @click="handleReply(c)"
                   >回复</el-button>
-                  <el-button v-if="isCommentAuthor(r) || auth.isAdmin" text size="small" type="danger" @click="handleDeleteComment(r)">删除</el-button>
+                  <el-button v-if="isCommentAuthor(r) || auth.isOwner" text size="small" type="danger" @click="handleDeleteComment(r)">删除</el-button>
                 </div>
               </div>
             </div>

@@ -67,7 +67,7 @@ async def update_guide(
     db: AsyncSession,
     guide_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Guide:
     guide = await db.execute(
@@ -76,7 +76,7 @@ async def update_guide(
     guide = guide.scalar_one_or_none()
     if guide is None:
         raise NotFoundError("指南不存在")
-    if guide.author_id != user_id and not is_admin:
+    if guide.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有编辑者可以修改")
 
     for key in ("title", "content", "tag", "related_projects", "sort_order", "is_pinned"):
@@ -92,13 +92,13 @@ async def delete_guide(
     db: AsyncSession,
     guide_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     guide = await db.execute(select(Guide).where(Guide.id == guide_id))
     guide = guide.scalar_one_or_none()
     if guide is None:
         raise NotFoundError("指南不存在")
-    if guide.author_id != user_id and not is_admin:
+    if guide.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有编辑者可以删除")
     await db.delete(guide)
     await db.commit()

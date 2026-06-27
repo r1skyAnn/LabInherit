@@ -104,16 +104,6 @@ async def mkuser(
     return user
 
 
-async def mkadmin(db: AsyncSession) -> User:
-    return mkuser(
-        db,
-        email="admin@test.com",
-        password="AdminPass1",
-        display_name="管理员",
-        role=UserRole.ADMIN.value,
-    )
-
-
 async def mkowner(db: AsyncSession) -> User:
     return mkuser(
         db,
@@ -132,7 +122,7 @@ async def mkinvite(
     max_uses: int = 1,
 ) -> Invite:
     if created_by_id is None:
-        creator = await mkadmin(db)
+        creator = await mkowner(db)
         created_by_id = creator.id
     invite = Invite(
         code=code,
@@ -159,18 +149,6 @@ async def member_token(client: AsyncClient, member: User) -> str:
     resp = await client.post("/api/v1/auth/login", json={
         "email": member.email,
         "password": "Pass@1234",
-    })
-    assert resp.status_code == 200
-    return resp.json()["access_token"]
-
-
-@pytest_asyncio.fixture
-async def admin_token(client: AsyncClient, db_session: AsyncSession) -> str:
-    """Login token for an admin."""
-    admin = await mkadmin(db_session)
-    resp = await client.post("/api/v1/auth/login", json={
-        "email": admin.email,
-        "password": "AdminPass1",
     })
     assert resp.status_code == 200
     return resp.json()["access_token"]

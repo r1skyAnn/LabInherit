@@ -54,7 +54,7 @@ function formatDate(d: string) {
       <el-button text size="small" @click="emit('like', note)">
         👍 {{ note.like_count }}
       </el-button>
-      <span class="footer-actions" v-if="isAuthor() || auth.isAdmin">
+      <span class="footer-actions" v-if="isAuthor() || auth.isOwner">
         <el-button text size="small" @click="emit('togglePin', note)">
           {{ note.is_pinned ? '📌 取消置顶' : '📌 置顶' }}
         </el-button>

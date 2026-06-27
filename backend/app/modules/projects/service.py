@@ -89,7 +89,7 @@ async def update_project(
     db: AsyncSession,
     project_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Project:
     project = await get_project(db, project_id)
@@ -97,7 +97,7 @@ async def update_project(
     if not _can_view_project(project, user_id):
         raise PermissionDeniedError("无权修改此项目")
 
-    if project.created_by != user_id and not is_admin:
+    if project.created_by != user_id and not is_owner:
         raise PermissionDeniedError("只有项目负责人可以修改项目信息")
 
     allowed_viewer_ids = data.pop("allowed_viewer_ids", None)
@@ -123,10 +123,10 @@ async def delete_project(
     db: AsyncSession,
     project_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     project = await get_project(db, project_id)
-    if project.created_by != user_id and not is_admin:
+    if project.created_by != user_id and not is_owner:
         raise PermissionDeniedError("只有项目负责人可以删除项目")
     await db.delete(project)
     await db.commit()

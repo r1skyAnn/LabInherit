@@ -59,33 +59,7 @@ async def _seed() -> None:
         )
         db.add(owner_audit)
 
-        # ── 2. Admins ────────────────────────────────────────────────────
-        admins = []
-        for i in range(2):
-            admin = User(
-                email=f"admin{i+1}@labinherit.local",
-                password_hash=hash_password(f"Admin@{i+1}23"),
-                display_name=f"大师兄{i+1}",
-                status=UserStatus.ACTIVE.value,
-                role=UserRole.ADMIN.value,
-            )
-            db.add(admin)
-            await db.flush()
-            db.add(UserProfile(
-                user_id=admin.id,
-                enrollment_year=2022 - i,
-                research_direction="系统架构",
-                current_affiliation="某某大学",
-                bio=f"第 {i+1} 任大师兄，负责审核新成员。",
-            ))
-            db.add(AuditQueue(
-                user_id=admin.id,
-                submitted_payload={"source": "seed"},
-                status=AuditStatus.APPROVED.value,
-            ))
-            admins.append(admin)
-
-        # ── 3. Graduated members (demo alumni) ─────────────────────────────
+        # ── 2. Graduated members (demo alumni) ─────────────────────────────
         alumni = []
         for i in range(5):
             grad = User(
@@ -136,7 +110,7 @@ async def _seed() -> None:
                 status=AuditStatus.APPROVED.value,
             ))
 
-        # One pending member (for admin to approve)
+        # One pending member (for owner to approve)
         pending = User(
             email="pending@labinherit.local",
             password_hash=hash_password("Pending@123"),
@@ -166,7 +140,7 @@ async def _seed() -> None:
             code = secrets.token_urlsafe(9).upper().replace("-", "").replace("_", "")[:12]
             invite = Invite(
                 code=code,
-                created_by=admins[i % len(admins)].id,
+                created_by=owner.id,
                 max_uses=1,
                 note=f"第 {i+1} 个演示邀请码",
             )
@@ -177,14 +151,10 @@ async def _seed() -> None:
 
         # ── Print summary ─────────────────────────────────────────────────
         print()
-        print("✅  数据库已填充，以下账号均可登录（密码均为 Demo123）：")
+        print("✅  数据库已填充，以下账号均可登录：")
         print()
         print("【Owner（导师）】")
         print(f"  owner@labinherit.local  / Owner@123")
-        print()
-        print("【Admin（大师兄）】")
-        for i, a in enumerate(admins):
-            print(f"  admin{i+1}@labinherit.local  / Admin@{i+1}23")
         print()
         print("【已毕业师兄师姐】")
         for i, g in enumerate(alumni):
@@ -195,7 +165,7 @@ async def _seed() -> None:
             print(f"  member{i+1}@labinherit.local  / Member@{i+1}23")
         print()
         print("【待审核】")
-        print(f"  pending@labinherit.local  / Pending@123  ← 需管理员批准后才能登录")
+        print(f"  pending@labinherit.local  / Pending@123  ← 需导师批准后才能登录")
         print()
         print("【邀请码】")
         for c in codes:

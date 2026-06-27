@@ -58,11 +58,11 @@ async def update_announcement(
     db: AsyncSession,
     announcement_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Announcement:
     announcement = await get_announcement(db, announcement_id)
-    if announcement.author_id != user_id and not is_admin:
+    if announcement.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有公告作者可以修改")
     for key, value in data.items():
         setattr(announcement, key, value)
@@ -75,10 +75,10 @@ async def delete_announcement(
     db: AsyncSession,
     announcement_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     announcement = await get_announcement(db, announcement_id)
-    if announcement.author_id != user_id and not is_admin:
+    if announcement.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有公告作者可以删除")
     await db.delete(announcement)
     await db.commit()

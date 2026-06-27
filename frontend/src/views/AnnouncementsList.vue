@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
+import { StarFilled } from '@element-plus/icons-vue'
 import { announcementsApi, type AnnouncementOut } from '@/api/announcements'
 import { useAuthStore } from '@/stores/auth'
 
@@ -119,7 +120,7 @@ onMounted(load)
 
         <div class="ann-content">{{ ann.content }}</div>
 
-        <div class="ann-actions" v-if="auth.user?.id === ann.author_id || auth.isAdmin">
+        <div class="ann-actions" v-if="auth.user?.id === ann.author_id || auth.isOwner">
           <el-button size="small" @click="openEdit(ann)">编辑</el-button>
           <el-button size="small" type="danger" plain @click="handleDelete(ann)">删除</el-button>
         </div>
@@ -149,12 +150,6 @@ onMounted(load)
     </el-dialog>
   </div>
 </template>
-
-<script lang="ts">
-import { StarFilled } from '@element-plus/icons-vue'
-export default { components: { StarFilled } }
-</script>
-
 <style scoped>
 .ann-page { max-width: 800px; margin: 0 auto; }
 

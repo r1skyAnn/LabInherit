@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import CurrentUser, require_admin_or_owner
+from app.core.deps import CurrentUser, require_owner
 from app.db.session import get_db
 from app.modules.admin import service
 from app.modules.admin.schemas import DashboardResponse
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.get("/dashboard", response_model=DashboardResponse, summary="管理看板")
 async def get_dashboard(
-    _: Annotated[User, Depends(require_admin_or_owner)],
+    _: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     return await service.get_dashboard(db)
@@ -32,7 +32,7 @@ async def get_dashboard(
 
 
 class RoleUpdate(BaseModel):
-    role: str  # member / admin / owner
+    role: str  # member / owner
 
 
 class StatusUpdate(BaseModel):
@@ -43,7 +43,7 @@ class StatusUpdate(BaseModel):
 async def change_user_role(
     user_id: int,
     payload: RoleUpdate,
-    actor: Annotated[User, Depends(require_admin_or_owner)],
+    actor: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     await service.update_user_role(db, user_id, payload.role, actor)
@@ -54,7 +54,7 @@ async def change_user_role(
 async def change_user_status(
     user_id: int,
     payload: StatusUpdate,
-    actor: Annotated[User, Depends(require_admin_or_owner)],
+    actor: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
     await service.update_user_status(db, user_id, payload.status, actor)

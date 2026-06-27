@@ -80,7 +80,7 @@ async def update_showcase(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ShowcaseOut:
     item = await service.update_item(
-        db, item_id, user.id, user.is_admin_or_above(),
+        db, item_id, user.id, user.is_owner(),
         payload.model_dump(exclude_unset=True),
     )
     return _build_out(item)
@@ -92,5 +92,5 @@ async def delete_showcase(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_item(db, item_id, user.id, user.is_admin_or_above())
+    await service.delete_item(db, item_id, user.id, user.is_owner())
     return {"detail": "已删除"}

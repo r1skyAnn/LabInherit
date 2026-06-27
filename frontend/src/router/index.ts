@@ -73,7 +73,7 @@ const routes: RouteRecordRaw[] = [
         path: 'categories',
         name: 'categories',
         component: () => import('@/views/CategoriesList.vue'),
-        meta: { title: '分类管理', requiredRoles: ['admin', 'owner'] },
+        meta: { title: '分类管理', requiredRoles: ['owner'] },
       },
       {
         path: 'projects/:projectId/notes',
@@ -109,7 +109,7 @@ const routes: RouteRecordRaw[] = [
         path: 'members',
         name: 'members',
         component: () => import('@/views/MembersList.vue'),
-        meta: { title: '成员列表', requiredRoles: ['admin', 'owner'] },
+        meta: { title: '成员列表', requiredRoles: ['owner'] },
       },
       {
         path: 'alumni',
@@ -117,24 +117,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/AlumniPosts.vue'),
         meta: { title: '毕业人员专区' },
       },
-      // Admin routes
+      // Owner routes
       {
         path: 'admin/dashboard',
         name: 'admin-dashboard',
         component: () => import('@/views/AdminDashboard.vue'),
-        meta: { title: '管理看板', requiredRoles: ['admin', 'owner'] },
+        meta: { title: '管理看板', requiredRoles: ['owner'] },
       },
       {
         path: 'admin/audit-queue',
         name: 'admin-audit-queue',
         component: () => import('@/views/AdminAuditQueue.vue'),
-        meta: { title: '审核队列', requiredRoles: ['admin', 'owner'] },
+        meta: { title: '审核队列', requiredRoles: ['owner'] },
       },
       {
         path: 'admin/invites',
         name: 'admin-invites',
         component: () => import('@/views/AdminInvites.vue'),
-        meta: { title: '邀请码管理', requiredRoles: ['admin', 'owner'] },
+        meta: { title: '邀请码管理', requiredRoles: ['owner'] },
       },
     ],
   },

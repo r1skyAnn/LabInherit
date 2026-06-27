@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { membersApi, type MemberOut } from '@/api/members'
 import { adminApi } from '@/api/admin'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
+import { Search } from '@element-plus/icons-vue'
 
 const auth = useAuthStore()
 const members = ref<MemberOut[]>([])
@@ -27,10 +28,10 @@ function formatYear(y: number | null) {
 }
 
 const roleLabel: Record<string, string> = {
-  owner: '导师', admin: '成员', member: '成员',
+  owner: '导师', member: '成员',
 }
 const roleType: Record<string, string> = {
-  owner: 'warning', admin: 'info', member: 'info',
+  owner: 'warning', member: 'info',
 }
 const statusLabel: Record<string, string> = {
   active: '在读', graduated: '已毕业', archived: '已归档',
@@ -41,7 +42,6 @@ const statusType: Record<string, string> = {
 
 const roleOptions: Record<string, { label: string; role: string }[]> = {
   owner: [{ label: '导师', role: 'owner' }, { label: '成员', role: 'member' }],
-  admin: [{ label: '成员', role: 'member' }],
   member: [{ label: '成员', role: 'member' }],
 }
 
@@ -184,10 +184,6 @@ onMounted(load)
   </div>
 </template>
 
-<script lang="ts">
-import { Search } from '@element-plus/icons-vue'
-export default { components: { Search } }
-</script>
 
 <style scoped>
 .members-page { max-width: 1200px; margin: 0 auto; }

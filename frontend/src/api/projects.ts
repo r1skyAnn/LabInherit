@@ -49,6 +49,7 @@ export interface ProjectOut {
   created_by: number
   creator_display_name: string | null
   is_public: boolean
+  allowed_viewer_ids: number[]
   created_at: string
   updated_at: string
 }

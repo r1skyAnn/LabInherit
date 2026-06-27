@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ProjectOut } from '@/api/projects'
 import { useAuthStore } from '@/stores/auth'
+import { Link, Monitor } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   project: ProjectOut
@@ -83,18 +84,13 @@ function formatDate(d: string | null) {
       <router-link :to="`/projects/${project.id}/notes`">
         <el-button size="small" type="primary">笔记</el-button>
       </router-link>
-      <template v-if="isOwner || auth.isAdmin">
+      <template v-if="isOwner || auth.isOwner">
         <el-button size="small" @click="emit('edit', project)">编辑</el-button>
         <el-button size="small" type="danger" plain @click="emit('delete', project)">删除</el-button>
       </template>
     </div>
   </el-card>
 </template>
-
-<script lang="ts">
-import { Link, Monitor } from '@element-plus/icons-vue'
-export default { components: { Link, Monitor } }
-</script>
 
 <style scoped>
 .project-card {

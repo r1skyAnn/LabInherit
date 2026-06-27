@@ -7,13 +7,13 @@ export interface CommentOut {
   target_id: number
   parent_id: number | null
   author_id: number
+  author_name: string
+  author_email: string
   content: string
   is_ask: boolean
   status: string
   created_at: string
   updated_at: string
-  author_name: string
-  author_email: string
 }
 
 export interface CommentCreate {

@@ -13,9 +13,6 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
 
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() =>
-    user.value?.role === 'admin' || user.value?.role === 'owner',
-  )
   const isOwner = computed(() => user.value?.role === 'owner')
 
   function setAuth(newToken: string, newUser: UserOut) {
@@ -76,7 +73,6 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     loading,
     isLoggedIn,
-    isAdmin,
     isOwner,
     setAuth,
     clearAuth,

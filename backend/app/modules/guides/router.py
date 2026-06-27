@@ -22,7 +22,7 @@ router = APIRouter(prefix="/guides", tags=["guides"])
 
 def _can_create(user) -> bool:
     if user.role == "owner": return True
-    if user.is_admin_or_above(): return True
+    if user.is_owner(): return True
     if user.status == "graduated": return True
     if user.profile and user.profile.enrollment_year:
         from datetime import datetime
@@ -32,7 +32,7 @@ def _can_create(user) -> bool:
 
 def _can_update(user) -> bool:
     if user.role == "owner": return True
-    if user.is_admin_or_above(): return True
+    if user.is_owner(): return True
     if user.status == "graduated": return False
     if user.profile and user.profile.enrollment_year:
         from datetime import datetime

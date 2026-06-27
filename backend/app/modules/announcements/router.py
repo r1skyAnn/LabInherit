@@ -79,7 +79,7 @@ async def update_announcement(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AnnouncementOut:
     ann = await service.update_announcement(
-        db, announcement_id, user.id, user.is_admin_or_above(), payload.model_dump(exclude_unset=True)
+        db, announcement_id, user.id, user.is_owner(), payload.model_dump(exclude_unset=True)
     )
     return _build_out(ann)
 
@@ -90,5 +90,5 @@ async def delete_announcement(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_announcement(db, announcement_id, user.id, user.is_admin_or_above())
+    await service.delete_announcement(db, announcement_id, user.id, user.is_owner())
     return {"detail": "公告已删除"}

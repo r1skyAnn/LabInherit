@@ -55,6 +55,7 @@ class ProjectOut(BaseModel):
     created_by: int
     creator_display_name: str | None = None
     is_public: bool
+    allowed_viewer_ids: list[int] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 

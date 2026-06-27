@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import CurrentUser, require_admin_or_owner
+from app.core.deps import CurrentUser, require_owner
 from app.db.session import get_db
 from app.modules.invites import service
 from app.modules.invites.schemas import (
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/invites", tags=["invites"])
 @router.post("", response_model=InviteOut, summary="创建邀请码（管理员）")
 async def create_invite(
     payload: InviteCreateRequest,
-    user: Annotated[User, Depends(require_admin_or_owner)],
+    user: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> InviteOut:
     invite = await service.create_invite(
@@ -40,7 +40,7 @@ async def create_invite(
 
 @router.get("", response_model=list[InviteOut], summary="列出邀请码（管理员）")
 async def list_invites(
-    user: Annotated[User, Depends(require_admin_or_owner)],
+    user: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
     include_revoked: bool = Query(False),
 ) -> list[InviteOut]:
@@ -51,7 +51,7 @@ async def list_invites(
 @router.post("/{invite_id}/revoke", response_model=InviteOut, summary="作废邀请码（管理员）")
 async def revoke_invite(
     invite_id: int,
-    user: Annotated[User, Depends(require_admin_or_owner)],
+    user: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> InviteOut:
     invite = await service.revoke_invite(db, invite_id, user)

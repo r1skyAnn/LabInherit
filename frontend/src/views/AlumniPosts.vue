@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { alumniPostsApi, type AlumniPostOut } from '@/api/alumniPosts'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
+import AlumniPostForm from '@/components/alumni/AlumniPostForm.vue'
 
 const auth = useAuthStore()
 const posts = ref<AlumniPostOut[]>([])
@@ -15,10 +16,10 @@ const showDetail = ref(false)
 const currentPost = ref<AlumniPostOut | null>(null)
 
 const canPost = computed(() =>
-  // 毕业生，或导师/管理员可以发布
+  // 毕业生或导师可以发布
   auth.user?.status === 'graduated' ||
   auth.user?.status === 'archived' ||
-  auth.isAdmin
+  auth.isOwner
 )
 
 const typeMap: Record<string, { label: string; type: string }> = {
@@ -134,7 +135,7 @@ onMounted(load)
         <div class="post-footer">
           <span class="post-author">{{ post.author_display_name }}</span>
           <div class="post-actions" @click.stop>
-            <template v-if="auth.user?.id === post.author_id || auth.isAdmin">
+            <template v-if="auth.user?.id === post.author_id || auth.isOwner">
               <el-button size="small" @click="openEdit(post)">编辑</el-button>
               <el-button size="small" type="danger" plain @click="handleDelete(post)">删除</el-button>
             </template>
@@ -173,12 +174,6 @@ onMounted(load)
     </el-dialog>
   </div>
 </template>
-
-<script lang="ts">
-import AlumniPostForm from '@/components/alumni/AlumniPostForm.vue'
-export default { components: { AlumniPostForm } }
-</script>
-
 <style scoped>
 .alumni-page {
   max-width: 1200px;

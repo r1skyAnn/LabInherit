@@ -84,11 +84,11 @@ async def update_comment(
     db: AsyncSession,
     comment_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Comment:
     comment = await get_comment(db, comment_id)
-    if comment.author_id != user_id and not is_admin:
+    if comment.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有评论作者可以修改")
 
     if "content" in data and data["content"] is not None:
@@ -110,10 +110,10 @@ async def delete_comment(
     db: AsyncSession,
     comment_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     comment = await get_comment(db, comment_id)
-    if comment.author_id != user_id and not is_admin:
+    if comment.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有评论作者可以删除")
 
     target_type = comment.target_type

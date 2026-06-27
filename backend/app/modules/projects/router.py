@@ -44,6 +44,7 @@ def _build_out(project: "Project", user_id: int | None = None) -> ProjectOut:
         created_by=project.created_by,
         creator_display_name=project.creator.display_name if project.creator else None,
         is_public=project.is_public,
+        allowed_viewer_ids=[v.user_id for v in project.allowed_viewers],
         created_at=project.created_at,
         updated_at=project.updated_at,
     )
@@ -55,10 +56,10 @@ async def create_project(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProjectOut:
-    # Allow ACTIVE members, owner (导师), and admin to create projects
-    if user.status != UserStatus.ACTIVE.value and user.role not in (UserRole.ADMIN.value, UserRole.OWNER.value):
+    # Allow ACTIVE members or owner to create projects
+    if user.status != UserStatus.ACTIVE.value and user.role != UserRole.OWNER.value:
         from app.core.exceptions import PermissionDeniedError
-        raise PermissionDeniedError("只有在读成员可以新建项目")
+        raise PermissionDeniedError("只有在读成员或导师可以新建项目")
     project = await service.create_project(
         db,
         created_by=user.id,
@@ -91,6 +92,9 @@ async def get_project(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProjectOut:
     project = await service.get_project(db, project_id)
+    if not service._can_view_project(project, user.id):
+        from app.core.exceptions import PermissionDeniedError
+        raise PermissionDeniedError("无权查看此项目")
     return _build_out(project, user.id)
 
 
@@ -102,7 +106,7 @@ async def update_project(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProjectOut:
     project = await service.update_project(
-        db, project_id, user.id, user.is_admin_or_above(), payload.model_dump(exclude_unset=True)
+        db, project_id, user.id, user.is_owner(), payload.model_dump(exclude_unset=True)
     )
     return _build_out(project, user.id)
 
@@ -113,5 +117,5 @@ async def delete_project(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_project(db, project_id, user.id, user.is_admin_or_above())
+    await service.delete_project(db, project_id, user.id, user.is_owner())
     return {"detail": "项目已删除"}

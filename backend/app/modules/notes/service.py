@@ -67,7 +67,8 @@ async def list_notes(
 
     offset = (page - 1) * page_size
     result = await db.execute(base.offset(offset).limit(page_size))
-    return list(result.scalars().all()), total
+    notes = list(result.scalars().all())
+    return notes, total
 
 
 async def get_note(db: AsyncSession, note_id: int) -> Note:
@@ -90,11 +91,11 @@ async def update_note(
     db: AsyncSession,
     note_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> Note:
     note = await get_note(db, note_id)
-    if note.author_id != user_id and not is_admin:
+    if note.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有笔记作者可以修改")
 
     for key in ("title", "content", "is_pinned"):
@@ -112,10 +113,10 @@ async def delete_note(
     db: AsyncSession,
     note_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     note = await get_note(db, note_id)
-    if note.author_id != user_id and not is_admin:
+    if note.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有笔记作者可以删除")
     await db.delete(note)
     await db.commit()

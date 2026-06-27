@@ -136,21 +136,17 @@ const navItems = computed<NavItem[]>(() => {
   ]
   const userStatus = auth.user?.status
   const isGraduated = userStatus === 'graduated' || userStatus === 'archived'
-  if (isGraduated || auth.isAdmin) {
+  if (isGraduated || auth.isOwner) {
     items.push({ path: '/alumni', title: '毕业人员专区', icon: 'Medal' })
   }
-  // 成员列表和分类管理：所有在读成员、导师、管理员都能看到
-  if (!isGraduated) {
+  // 成员列表和分类管理：只有导师能看到
+  if (auth.isOwner) {
     items.push(
       { path: '/members', title: '成员列表', icon: 'User' },
       { path: '/categories', title: '分类管理', icon: 'Grid' },
-    )
-  }
-  if (auth.isOwner) {
-    items.push(
-      { path: '/admin/dashboard', title: '管理看板', icon: 'TrendCharts', roles: ['owner'] },
-      { path: '/admin/audit-queue', title: '审核队列', icon: 'Checked', roles: ['owner'] },
-      { path: '/admin/invites', title: '邀请码管理', icon: 'Key', roles: ['owner'] },
+      { path: '/admin/dashboard', title: '管理看板', icon: 'TrendCharts' },
+      { path: '/admin/audit-queue', title: '审核队列', icon: 'Checked' },
+      { path: '/admin/invites', title: '邀请码管理', icon: 'Key' },
     )
   }
   return items
@@ -202,7 +198,7 @@ onUnmounted(() => {
       <div class="sidebar-footer">
         <router-link v-if="!sidebarCollapsed" to="/profile" class="user-info">
           <span class="user-name">{{ auth.user?.display_name }}</span>
-          <el-tag size="small" :type="auth.isAdmin ? 'warning' : 'info'">
+          <el-tag size="small" :type="auth.isOwner ? 'warning' : 'info'">
             {{ auth.user?.role === 'owner' ? '导师' : auth.user?.profile?.gender === '女' ? '师姐' : auth.user?.profile?.gender === '男' ? '师兄' : '成员' }}
           </el-tag>
         </router-link>

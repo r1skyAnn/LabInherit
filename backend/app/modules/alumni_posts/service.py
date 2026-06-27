@@ -61,11 +61,11 @@ async def update_alumni_post(
     db: AsyncSession,
     post_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> AlumniPost:
     post = await get_alumni_post(db, post_id)
-    if post.author_id != user_id and not is_admin:
+    if post.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有作者可以修改此帖子")
     for key, value in data.items():
         if value is not None:
@@ -79,10 +79,10 @@ async def delete_alumni_post(
     db: AsyncSession,
     post_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     post = await get_alumni_post(db, post_id)
-    if post.author_id != user_id and not is_admin:
+    if post.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有作者或管理员可以删除此帖子")
     await db.delete(post)
     await db.commit()

@@ -28,7 +28,7 @@ const form = ref({
 
 async function loadCategories() {
   try {
-    const resp = await categoriesApi.list(props.projectId)
+    const resp = await categoriesApi.list()
     categories.value = resp.data.items
   } catch {
     categories.value = []

@@ -35,7 +35,7 @@ const defaultForm = () => ({
   started_at: props.project?.started_at ?? '',
   ended_at: props.project?.ended_at ?? '',
   is_public: props.project?.is_public ?? true,
-  allowed_viewer_ids: [] as number[],
+  allowed_viewer_ids: props.project?.allowed_viewer_ids ?? [],
 })
 
 const form = ref(defaultForm())

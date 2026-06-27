@@ -88,7 +88,7 @@ async def update_comment(
 ) -> CommentOut:
     data = payload.model_dump(exclude_unset=True)
     comment = await service.update_comment(
-        db, comment_id, user.id, user.is_admin_or_above(), data,
+        db, comment_id, user.id, user.is_owner(), data,
     )
     # If this was an upgrade to ask, fire email notification
     if data.get("is_ask"):
@@ -102,7 +102,7 @@ async def delete_comment(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.delete_comment(db, comment_id, user.id, user.is_admin_or_above())
+    await service.delete_comment(db, comment_id, user.id, user.is_owner())
     return {"detail": "评论已删除"}
 
 

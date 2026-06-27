@@ -27,7 +27,7 @@ async def create_invite(
     expires_at: datetime | None = None,
     note: str | None = None,
 ) -> Invite:
-    if not created_by.is_admin_or_above():
+    if not created_by.is_owner():
         raise PermissionDeniedError("只有管理员可以生成邀请码")
     code = _generate_code()
     invite = Invite(
@@ -45,7 +45,7 @@ async def create_invite(
 
 async def list_invites(
     db: AsyncSession,
-    _: User,  # admin only, enforced by router
+    _: User,  # owner only, enforced by router
     include_revoked: bool = False,
 ) -> list[Invite]:
     stmt = select(Invite).order_by(Invite.created_at.desc())
@@ -60,7 +60,7 @@ async def revoke_invite(
     invite_id: int,
     user: User,
 ) -> Invite:
-    if not user.is_admin_or_above():
+    if not user.is_owner():
         raise PermissionDeniedError("只有管理员可以作废邀请码")
     result = await db.execute(select(Invite).where(Invite.id == invite_id))
     invite = result.scalar_one_or_none()

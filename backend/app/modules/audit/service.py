@@ -76,7 +76,7 @@ async def decide(
     action: str,
     note: str | None = None,
 ) -> AuditEntryOut:
-    if not reviewer.is_admin_or_above():
+    if not reviewer.is_owner():
         raise PermissionDeniedError("只有管理员可以审核")
 
     result = await db.execute(

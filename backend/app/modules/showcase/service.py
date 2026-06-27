@@ -69,11 +69,11 @@ async def update_item(
     db: AsyncSession,
     item_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
     data: dict,
 ) -> ShowcaseItem:
     item = await get_item(db, item_id)
-    if item.author_id != user_id and not is_admin:
+    if item.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有作者可以修改")
 
     for key in ("title", "description", "image_url", "pdf_url", "contact_info", "experience"):
@@ -101,10 +101,10 @@ async def delete_item(
     db: AsyncSession,
     item_id: int,
     user_id: int,
-    is_admin: bool,
+    is_owner: bool,
 ) -> None:
     item = await get_item(db, item_id)
-    if item.author_id != user_id and not is_admin:
+    if item.author_id != user_id and not is_owner:
         raise PermissionDeniedError("只有作者可以删除")
     await db.delete(item)
     await db.commit()

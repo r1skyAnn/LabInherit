@@ -1,4 +1,4 @@
-"""Cross-cutting FastAPI dependencies: auth, role checks, owner-or-admin checks."""
+"""Cross-cutting FastAPI dependencies: auth, role checks."""
 
 from __future__ import annotations
 
@@ -76,27 +76,27 @@ def require_role(*roles: str) -> Callable[..., Any]:
     return _checker
 
 
-async def require_admin_or_owner(user: CurrentUser) -> User:
-    """Allow owner (导师) and admin (管理员) only."""
-    if user.role not in ("admin", "owner"):
-        raise PermissionDeniedError("需要管理员或所有者权限")
-    return user
-
-
-async def require_member_or_above(user: CurrentUser) -> User:
-    """Allow owner, admin, and regular members. Excludes alumni."""
-    if user.role in ("alumni",):
+async def require_active_member(user: CurrentUser) -> User:
+    """Allow members and owner, but not alumni (graduated/archived)."""
+    if user.status in ("graduated", "archived"):
         raise PermissionDeniedError("毕业生账号无法执行此操作")
     return user
 
 
-def require_owner_or_admin_resource(
+async def require_owner(user: CurrentUser) -> User:
+    """Allow owner (导师) only."""
+    if user.role != "owner":
+        raise PermissionDeniedError("需要所有者（导师）权限")
+    return user
+
+
+def require_owner_or_self_resource(
     model: type, id_param: str = "id"
 ) -> Callable[..., Any]:
-    """Factory: load `model` by `id_param`; 403 unless user is owner-of-record or admin+.
+    """Factory: load `model` by `id_param`; 403 unless user is owner-of-record or owner.
 
     Usage:
-        @router.delete("/notes/{id}", dependencies=[Depends(require_owner_or_admin_resource(Note))])
+        @router.delete("/notes/{id}", dependencies=[Depends(require_owner_or_self_resource(Note))])
     """
 
     async def _checker(
@@ -120,7 +120,7 @@ def require_owner_or_admin_resource(
         owner_attr = getattr(obj, "author_id", None) or getattr(obj, "user_id", None)
         if owner_attr is not None and owner_attr == user.id:
             return obj
-        if user.is_admin_or_above():
+        if user.is_owner():
             return obj
         raise PermissionDeniedError("无权限操作此资源")
 

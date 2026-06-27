@@ -38,6 +38,8 @@ function formatDate(d: string | null) {
 
 const isOwner = () => project.value && project.value.created_by === auth.user?.id
 
+const canEdit = () => isOwner() || auth.isOwner
+
 async function load() {
   loading.value = true
   try {
@@ -145,7 +147,7 @@ onMounted(() => { load(); loadAsks() })
           <a v-if="project.zip_url" :href="project.zip_url" target="_blank" rel="noreferrer" class="link-btn">📦 源码压缩包</a>
         </div>
 
-        <div class="hero-actions" v-if="isOwner() || auth.isAdmin">
+        <div class="hero-actions" v-if="canEdit()">
           <el-button @click="openEdit">编辑</el-button>
           <el-button type="danger" plain @click="handleDelete">删除</el-button>
         </div>

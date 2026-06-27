@@ -25,7 +25,6 @@ class UserStatus(str, Enum):
 
 class UserRole(str, Enum):
     MEMBER = "member"
-    ADMIN = "admin"
     OWNER = "owner"
 
 
@@ -63,7 +62,7 @@ class User(Base, TimestampMixin):
             name="users_status_valid",
         ),
         CheckConstraint(
-            "role IN ('member', 'admin', 'owner')",
+            "role IN ('member', 'owner')",
             name="users_role_valid",
         ),
     )
@@ -71,8 +70,8 @@ class User(Base, TimestampMixin):
     def is_active_member(self) -> bool:
         return self.status == UserStatus.ACTIVE.value
 
-    def is_admin_or_above(self) -> bool:
-        return self.role in (UserRole.ADMIN.value, UserRole.OWNER.value)
+    def is_owner(self) -> bool:
+        return self.role == UserRole.OWNER.value
 
 
 class UserProfile(Base, TimestampMixin):
