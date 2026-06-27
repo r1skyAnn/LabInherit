@@ -7,6 +7,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const isDev = mode === 'development'
 
   return {
     plugins: [
@@ -59,6 +60,12 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+    },
+    // 生产环境：直接使用后端 URL，不走 proxy
+    define: {
+      __API_BASE__: JSON.stringify(
+        isDev ? '/api/v1' : (env.VITE_API_BASE || 'http://localhost:8000/api/v1'),
+      ),
     },
   }
 })

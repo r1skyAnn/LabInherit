@@ -6,9 +6,19 @@ import router from '@/router'
  * Centralized axios client. All API modules import this and use typed methods.
  *
  * baseURL is read from VITE_API_BASE; in dev Vite proxies /api to the backend.
+ * In production, VITE_API_BASE should be the full backend URL (e.g., http://localhost:8000/api/v1).
  */
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE ?? '/api/v1',
+  baseURL: (() => {
+    const envBase = import.meta.env.VITE_API_BASE
+    if (envBase) {
+      // 如果配置了绝对 URL（生产环境）或相对路径（开发环境）
+      return envBase.startsWith('http')
+        ? envBase  // 生产：完整 URL
+        : envBase  // 开发：相对路径，Vite proxy 会处理
+    }
+    return '/api/v1'  // 默认相对路径
+  })(),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

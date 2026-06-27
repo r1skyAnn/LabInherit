@@ -16,7 +16,7 @@ from app.modules.projects.schemas import (
     ProjectOut,
     ProjectUpdate,
 )
-from app.modules.users.models import UserStatus
+from app.modules.users.models import UserRole, UserStatus
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -55,7 +55,8 @@ async def create_project(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ProjectOut:
-    if user.status != UserStatus.ACTIVE.value:
+    # Allow ACTIVE members, owner (导师), and admin to create projects
+    if user.status != UserStatus.ACTIVE.value and user.role not in (UserRole.ADMIN.value, UserRole.OWNER.value):
         from app.core.exceptions import PermissionDeniedError
         raise PermissionDeniedError("只有在读成员可以新建项目")
     project = await service.create_project(

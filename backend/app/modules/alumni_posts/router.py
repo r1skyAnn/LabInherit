@@ -16,7 +16,7 @@ from app.modules.alumni_posts.schemas import (
     AlumniPostOut,
     AlumniPostUpdate,
 )
-from app.modules.users.models import UserStatus
+from app.modules.users.models import UserRole, UserStatus
 
 router = APIRouter(prefix="/alumni-posts", tags=["alumni-posts"])
 
@@ -44,9 +44,12 @@ async def create_alumni_post(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AlumniPostOut:
-    if user.status not in (UserStatus.GRADUATED.value, UserStatus.ARCHIVED.value):
+    # Allow graduates/alumni OR owner/admin to create posts
+    is_graduated = user.status in (UserStatus.GRADUATED.value, UserStatus.ARCHIVED.value)
+    is_privileged = user.role in (UserRole.OWNER.value, UserRole.ADMIN.value)
+    if not is_graduated and not is_privileged:
         from app.core.exceptions import PermissionDeniedError
-        raise PermissionDeniedError("只有毕业生或已归档成员可以发布")
+        raise PermissionDeniedError("只有毕业生、导师或管理员可以发布")
     post = await service.create_alumni_post(
         db,
         author_id=user.id,

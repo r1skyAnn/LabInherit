@@ -40,7 +40,10 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
 
     # ---------- CORS ----------
-    APP_CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    APP_CORS_ORIGINS: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        description="Comma-separated allowed CORS origins. Use * for all in dev, specific domains in prod.",
+    )
 
     @property
     def cors_origins(self) -> list[str]:

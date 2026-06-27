@@ -77,8 +77,16 @@ def require_role(*roles: str) -> Callable[..., Any]:
 
 
 async def require_admin_or_owner(user: CurrentUser) -> User:
+    """Allow owner (导师) and admin (管理员) only."""
     if user.role not in ("admin", "owner"):
         raise PermissionDeniedError("需要管理员或所有者权限")
+    return user
+
+
+async def require_member_or_above(user: CurrentUser) -> User:
+    """Allow owner, admin, and regular members. Excludes alumni."""
+    if user.role in ("alumni",):
+        raise PermissionDeniedError("毕业生账号无法执行此操作")
     return user
 
 

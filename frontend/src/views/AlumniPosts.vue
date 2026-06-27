@@ -15,7 +15,10 @@ const showDetail = ref(false)
 const currentPost = ref<AlumniPostOut | null>(null)
 
 const canPost = computed(() =>
-  auth.user?.status === 'graduated' || auth.user?.status === 'archived'
+  // 毕业生，或导师/管理员可以发布
+  auth.user?.status === 'graduated' ||
+  auth.user?.status === 'archived' ||
+  auth.isAdmin
 )
 
 const typeMap: Record<string, { label: string; type: string }> = {

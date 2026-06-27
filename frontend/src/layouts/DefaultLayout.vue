@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { notificationsApi, type NotificationOut } from '@/api/notifications'
 import { notesApi, type NoteOut } from '@/api/notes'
 import { ElMessage } from 'element-plus'
-import { Bell, Search, Medal } from '@element-plus/icons-vue'
+import { Bell, Search, Medal, Document, ArrowRight } from '@element-plus/icons-vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -139,13 +139,10 @@ const navItems = computed<NavItem[]>(() => {
   if (isGraduated || auth.isAdmin) {
     items.push({ path: '/alumni', title: '毕业人员专区', icon: 'Medal' })
   }
-  if (auth.isAdmin) {
+  // 成员列表和分类管理：所有在读成员、导师、管理员都能看到
+  if (!isGraduated) {
     items.push(
       { path: '/members', title: '成员列表', icon: 'User' },
-    )
-  }
-  if (auth.isAdmin) {
-    items.push(
       { path: '/categories', title: '分类管理', icon: 'Grid' },
     )
   }
@@ -220,14 +217,16 @@ onUnmounted(() => {
         <div class="topbar-center">
           <el-popover
             :visible="searchVisible"
-            placement="bottom"
-            :width="420"
+            placement="bottom-start"
+            :width="400"
             trigger="manual"
             :hide-after="0"
+            :show-arrow="false"
           >
             <div class="search-dropdown" v-loading="searchLoading">
               <div v-if="searchResults.length === 0 && !searchLoading" class="search-empty">
-                {{ searchQuery ? '无搜索结果' : '输入关键词搜索笔记' }}
+                <el-icon><Search /></el-icon>
+                <span>{{ searchQuery ? '未找到相关笔记' : '输入关键词搜索笔记' }}</span>
               </div>
               <div
                 v-for="n in searchResults"
@@ -235,10 +234,19 @@ onUnmounted(() => {
                 class="search-item"
                 @click="goToResult(n)"
               >
-                <div class="search-item-title">{{ n.title }}</div>
-                <div class="search-item-meta">
-                  <el-tag size="small" effect="plain">{{ n.project_title }}</el-tag>
-                  <span>{{ n.author_display_name }}</span>
+                <div class="search-item-icon">
+                  <el-icon><Document /></el-icon>
+                </div>
+                <div class="search-item-content">
+                  <div class="search-item-title">{{ n.title }}</div>
+                  <div class="search-item-meta">
+                    <el-tag size="small" effect="plain" class="project-tag">{{ n.project_title || '通用' }}</el-tag>
+                    <span class="meta-sep">·</span>
+                    <span class="author-name">{{ n.author_display_name }}</span>
+                  </div>
+                </div>
+                <div class="search-item-arrow">
+                  <el-icon><ArrowRight /></el-icon>
                 </div>
               </div>
             </div>
@@ -406,21 +414,101 @@ onUnmounted(() => {
 .topbar-center .search-input {
   width: 100%;
 }
-.search-dropdown { max-height: 380px; overflow-y: auto; }
+
+/* ── Search dropdown ──────────────── */
+.search-dropdown {
+  max-height: 380px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
 .search-empty {
-  text-align: center; padding: 1.5rem; color: var(--lab-muted); font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: var(--lab-muted);
+  font-size: 0.85rem;
 }
+
 .search-item {
-  padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--el-border-color-lighter);
-  cursor: pointer; transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.search-item:hover { background: var(--el-fill-color-light); }
-.search-item:last-child { border-bottom: none; }
+.search-item:last-child {
+  border-bottom: none;
+}
+.search-item:hover {
+  background: var(--el-fill-color-light);
+}
+.search-item:hover .search-item-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.search-item-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--el-color-primary-light-9);
+  border-radius: 6px;
+  color: var(--el-color-primary);
+}
+
+.search-item-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .search-item-title {
-  font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0.2rem;
 }
+
 .search-item-meta {
-  display: flex; gap: 0.5rem; align-items: center; font-size: 0.76rem; color: var(--lab-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: var(--lab-muted);
+}
+
+.project-tag {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta-sep {
+  color: var(--el-border-color);
+}
+
+.author-name {
+  color: var(--el-text-color-secondary);
+}
+
+.search-item-arrow {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  color: var(--el-color-primary);
 }
 
 .topbar-right {

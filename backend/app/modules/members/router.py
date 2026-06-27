@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import require_admin_or_owner
+from app.core.deps import require_member_or_above
 from app.db.session import get_db
 from app.modules.members.schemas import MemberListResponse, MemberOut
 from app.modules.users.models import User
@@ -16,9 +16,9 @@ from app.modules.users.models import User
 router = APIRouter(prefix="/members", tags=["members"])
 
 
-@router.get("", response_model=MemberListResponse, summary="成员列表（管理员）")
+@router.get("", response_model=MemberListResponse, summary="成员列表（成员及以上）")
 async def list_members(
-    _: Annotated[User, Depends(require_admin_or_owner)],
+    _: Annotated[User, Depends(require_member_or_above)],
     db: Annotated[AsyncSession, Depends(get_db)],
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
