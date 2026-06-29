@@ -88,3 +88,6 @@ build/
 dist/
 *.tsbuildinfo
 /backend/uploads/
+
+# Local backup directories (Sage convention: rollback anchors)
+**/.bak/

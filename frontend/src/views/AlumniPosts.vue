@@ -15,12 +15,15 @@ const editingPost = ref<AlumniPostOut | null>(null)
 const showDetail = ref(false)
 const currentPost = ref<AlumniPostOut | null>(null)
 
-const canPost = computed(() =>
-  // 毕业生或导师可以发布
-  auth.user?.status === 'graduated' ||
-  auth.user?.status === 'archived' ||
-  auth.isOwner
-)
+const canPost = computed(() => {
+  // 任何登录用户都可以发布（实习生可能找到工作机会）
+  return !!auth.user
+})
+
+const canView = computed(() => {
+  // 所有人可查看（只要登录即可）
+  return !!auth.user
+})
 
 const typeMap: Record<string, { label: string; type: string }> = {
   referral: { label: '内推', type: 'success' },

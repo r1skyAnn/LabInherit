@@ -44,12 +44,10 @@ async def create_alumni_post(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AlumniPostOut:
-    # Only graduates or owner can create posts
-    is_graduated = user.status in (UserStatus.GRADUATED.value, UserStatus.ARCHIVED.value)
-    is_owner = user.role == UserRole.OWNER.value
-    if not is_graduated and not is_owner:
-        from app.core.exceptions import PermissionDeniedError
-        raise PermissionDeniedError("只有毕业生或导师可以发布")
+    # 任何登录用户都可以发布（实习生也可能需要发布内推/资源信息）
+    from app.core.exceptions import PermissionDeniedError
+    if user.status == UserStatus.ARCHIVED.value:
+        raise PermissionDeniedError("账号已归档，无法发布")
     post = await service.create_alumni_post(
         db,
         author_id=user.id,

@@ -21,7 +21,7 @@ async def list_members(
     _: Annotated[User, Depends(require_active_member)],
     db: Annotated[AsyncSession, Depends(get_db)],
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(50, ge=1, le=1000),
     search: str | None = Query(None),
 ) -> MemberListResponse:
     from app.modules.users.models import UserProfile  # avoid circular at module load

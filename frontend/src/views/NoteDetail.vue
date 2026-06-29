@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { notesApi, type NoteOut } from '@/api/notes'
 import { commentsApi, type CommentOut } from '@/api/comments'
@@ -8,6 +8,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import MarkdownRenderer from '@/components/notes/MarkdownRenderer.vue'
 import NoteForm from '@/components/notes/NoteForm.vue'
+import AttachmentList from '@/components/notes/AttachmentList.vue'
+import { exportMarkdown, exportHTML, exportDocx, exportPDF, exportMindmapSVG } from '@/utils/exportNote'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,6 +20,45 @@ const projectId = Number(route.params.projectId)
 const note = ref<NoteOut | null>(null)
 const loading = ref(true)
 const showEdit = ref(false)
+const exporting = ref(false)
+const showMindmap = ref(false)
+const mindmapContainer = ref<HTMLElement | null>(null)
+
+// ── Export handlers ──────────────────────────────
+async function doExport(kind: 'md' | 'html' | 'docx' | 'pdf' | 'svg') {
+  if (!note.value) return
+  const { title, content } = note.value
+  exporting.value = true
+  try {
+    if (kind === 'md') {
+      exportMarkdown(title, content)
+    } else if (kind === 'html') {
+      exportHTML(title, content)
+    } else if (kind === 'docx') {
+      await exportDocx(title, content)
+    } else if (kind === 'pdf') {
+      await exportPDF(title, content)
+    } else if (kind === 'svg') {
+      await exportMindmapSVG(content, title)
+    }
+    ElMessage.success('已开始下载')
+  } catch (err: any) {
+    console.error(err)
+    ElMessage.error(`导出失败: ${err?.message || '未知错误'}`)
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function openMindmap() {
+  if (!note.value) return
+  showMindmap.value = true
+  await nextTick()
+  if (mindmapContainer.value) {
+    const { renderMindmap } = await import('@/utils/exportNote')
+    await renderMindmap(note.value.content, mindmapContainer.value)
+  }
+}
 
 // Comments
 const comments = ref<CommentOut[]>([])
@@ -130,6 +171,8 @@ async function handleTogglePin() {
   ElMessage.success(note.value.is_pinned ? '已取消置顶' : '已置顶')
   await load()
 }
+
+// (nextTick already imported above)
 
 // ── Comment actions ──────────────────────────────
 
@@ -282,6 +325,12 @@ onMounted(() => {
           <MarkdownRenderer :content="note.content" />
         </div>
 
+        <AttachmentList
+          :note-id="note.id"
+          :can-edit="isAuthor() || auth.isOwner"
+          @changed="load"
+        />
+
         <footer class="article-footer">
           <div class="footer-left">
             <el-button @click="handleLike">👍 {{ note.like_count }}</el-button>
@@ -291,6 +340,21 @@ onMounted(() => {
             <el-button @click="handleTogglePin">
               {{ note.is_pinned ? '取消置顶' : '置顶' }}
             </el-button>
+            <el-dropdown @command="(c: string) => doExport(c as any)" trigger="click">
+              <el-button :loading="exporting">
+                导出 ⌄
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="md">📄 Markdown (.md)</el-dropdown-item>
+                  <el-dropdown-item command="html">🌐 HTML (.html)</el-dropdown-item>
+                  <el-dropdown-item command="docx">📘 Word (.docx)</el-dropdown-item>
+                  <el-dropdown-item command="pdf">📕 PDF (.pdf)</el-dropdown-item>
+                  <el-dropdown-item divided command="svg" @click="openMindmap">🧠 脑图 (SVG)</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button @click="openMindmap">🧠 预览脑图</el-button>
             <el-button @click="showEdit = true">编辑</el-button>
             <el-button type="danger" plain @click="handleDelete">删除</el-button>
           </div>
@@ -450,6 +514,13 @@ onMounted(() => {
           @saved="handleSaved"
           @cancel="showEdit = false"
         />
+      </el-dialog>
+
+      <el-dialog v-model="showMindmap" title="🧠 笔记脑图（基于标题层级自动生成）" width="900px" destroy-on-close>
+        <div ref="mindmapContainer" class="mindmap-container"></div>
+        <template #footer>
+          <el-button type="primary" @click="doExport('svg')">导出 SVG</el-button>
+        </template>
       </el-dialog>
     </template>
   </div>
@@ -628,3 +699,14 @@ onMounted(() => {
   justify-content: flex-end;
 }
 </style>
+
+.mindmap-container {
+  width: 100%;
+  height: 600px;
+  background: #fafafa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mindmap-container :deep(svg) {
+  display: block;
+}

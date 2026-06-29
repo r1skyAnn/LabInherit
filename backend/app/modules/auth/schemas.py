@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    # 使用 str 而非 EmailStr，避开 .local 等保留域名 / 严格 deliverability 检查的限制
+    email: str = Field(min_length=3, max_length=128)
     password: str = Field(min_length=1, max_length=128)
 
 
@@ -21,7 +22,8 @@ class LogoutResponse(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    # 同上，使用 str 而非 EmailStr
+    email: str = Field(min_length=3, max_length=128)
 
 
 class ForgotPasswordResponse(BaseModel):

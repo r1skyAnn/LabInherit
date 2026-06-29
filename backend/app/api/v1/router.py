@@ -15,6 +15,7 @@ from app.modules.announcements.router import router as announcements_router
 from app.modules.members.router import router as members_router
 from app.modules.categories.router import router as categories_router
 from app.modules.notes.router import router as notes_router
+from app.modules.files.router import router as files_router
 from app.modules.comments.router import router as comments_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.admin.router import router as admin_router
@@ -35,6 +36,7 @@ api_v1_router.include_router(announcements_router)
 api_v1_router.include_router(members_router)
 api_v1_router.include_router(categories_router)
 api_v1_router.include_router(notes_router)
+api_v1_router.include_router(files_router)
 api_v1_router.include_router(comments_router)
 api_v1_router.include_router(notifications_router)
 api_v1_router.include_router(admin_router)

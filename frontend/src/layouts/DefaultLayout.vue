@@ -133,12 +133,8 @@ const navItems = computed<NavItem[]>(() => {
     { path: '/guides', title: '新人指南', icon: 'Reading' },
     { path: '/showcase', title: '成果展示墙', icon: 'PictureFilled' },
     { path: '/announcements', title: '公告中心', icon: 'BellFilled' },
+    { path: '/alumni', title: '毕业人员专区', icon: 'Medal' },
   ]
-  const userStatus = auth.user?.status
-  const isGraduated = userStatus === 'graduated' || userStatus === 'archived'
-  if (isGraduated || auth.isOwner) {
-    items.push({ path: '/alumni', title: '毕业人员专区', icon: 'Medal' })
-  }
   // 成员列表和分类管理：只有导师能看到
   if (auth.isOwner) {
     items.push(

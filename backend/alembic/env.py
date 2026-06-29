@@ -28,6 +28,7 @@ from app.modules.projects.models import Project  # noqa: F401
 from app.modules.announcements.models import Announcement  # noqa: F401
 from app.modules.categories.models import Category  # noqa: F401
 from app.modules.notes.models import Note  # noqa: F401
+from app.modules.files.models import File, NoteAttachment  # noqa: F401
 
 config = context.config
 
