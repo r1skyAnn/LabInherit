@@ -49,6 +49,7 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FileUploader: typeof import('./components/notes/FileUploader.vue')['default']
+    GuideAttachmentList: typeof import('./components/guides/GuideAttachmentList.vue')['default']
     MarkdownRenderer: typeof import('./components/notes/MarkdownRenderer.vue')['default']
     NoteCard: typeof import('./components/notes/NoteCard.vue')['default']
     NoteForm: typeof import('./components/notes/NoteForm.vue')['default']

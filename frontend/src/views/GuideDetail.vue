@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { guidesApi, type GuideOut } from '@/api/guides'
 import { projectsApi, type ProjectOut } from '@/api/projects'
+import { filesApi } from '@/api/files'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, ArrowRight, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, ArrowRight, ArrowDown, Download } from '@element-plus/icons-vue'
 import MarkdownRenderer from '@/components/notes/MarkdownRenderer.vue'
+import FileUploader from '@/components/notes/FileUploader.vue'
+import GuideAttachmentList from '@/components/guides/GuideAttachmentList.vue'
+import {
+  exportMarkdown,
+  exportHTML,
+  exportDocx,
+  exportPDF,
+  exportMindmapSVG,
+} from '@/utils/exportNote'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,6 +29,12 @@ const relatedProjects = ref<ProjectOut[]>([])
 const activeTag = ref<string>('')
 const showDialog = ref(false)
 const editing = ref<GuideOut | null>(null)
+
+// ── Export + Attachments ──────────────────────
+const exporting = ref(false)
+const showMindmap = ref(false)
+const mindmapContainer = ref<HTMLElement | null>(null)
+const attachmentListRef = ref<InstanceType<typeof GuideAttachmentList> | null>(null)
 
 interface TagGroup {
   tag: string
@@ -173,6 +189,51 @@ async function handleDelete(g: GuideOut) {
   if (guides.value.length > 0) selectGuide(guides.value[0])
 }
 
+// ── Export handlers ──────────────────────
+async function doExport(kind: 'md' | 'html' | 'docx' | 'pdf' | 'svg') {
+  if (!current.value) return
+  const { title, content } = current.value
+  exporting.value = true
+  try {
+    if (kind === 'md') exportMarkdown(title, content)
+    else if (kind === 'html') exportHTML(title, content)
+    else if (kind === 'docx') await exportDocx(title, content)
+    else if (kind === 'pdf') await exportPDF(title, content)
+    else if (kind === 'svg') await exportMindmapSVG(content, title)
+    ElMessage.success('已开始下载')
+  } catch (err: any) {
+    console.error(err)
+    ElMessage.error(`导出失败: ${err?.message || '未知错误'}`)
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function openMindmap() {
+  if (!current.value) return
+  showMindmap.value = true
+  await nextTick()
+  if (mindmapContainer.value) {
+    const { renderMindmap } = await import('@/utils/exportNote')
+    await renderMindmap(current.value.content, mindmapContainer.value)
+  }
+}
+
+// ── Attachments ──────────────────────
+async function handleAttachFileUploaded(files: { id: number; original_name: string }[]) {
+  if (!current.value) return
+  const { guideAttachmentsApi } = await import('@/api/files')
+  for (const f of files) {
+    await guideAttachmentsApi.attach(current.value.id, { file_id: f.id, role: 'attachment' })
+  }
+  attachmentListRef.value?.load()
+}
+
+const canEditCurrent = computed(() => {
+  if (!current.value) return false
+  return canUpdate() && (auth.user?.id === current.value.author_id || auth.isOwner)
+})
+
 watch(() => activeTag.value, () => {
   current.value = null
   loadGuides()
@@ -255,6 +316,18 @@ onMounted(async () => {
         <div class="guide-header">
           <h2>{{ current.title }}</h2>
           <div class="guide-actions">
+            <el-dropdown @command="(c: string) => doExport(c as any)" trigger="click">
+              <el-button :loading="exporting" :icon="Download">导出 ⌄</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="md">📄 Markdown (.md)</el-dropdown-item>
+                  <el-dropdown-item command="html">🌐 HTML (.html)</el-dropdown-item>
+                  <el-dropdown-item command="docx">📘 Word (.docx)</el-dropdown-item>
+                  <el-dropdown-item command="pdf">📕 PDF (.pdf)</el-dropdown-item>
+                  <el-dropdown-item command="svg" @click="openMindmap" divided>🧠 脑图 (SVG)</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button v-if="canUpdate()" text size="small" @click="openEdit(current)">编辑</el-button>
             <el-button v-if="auth.isOwner" text size="small" type="danger" @click="handleDelete(current)">删除</el-button>
           </div>
@@ -262,6 +335,33 @@ onMounted(async () => {
         <div class="guide-content">
           <MarkdownRenderer :content="current.content" />
         </div>
+
+        <!-- Attachments -->
+        <section class="attachments-section">
+          <GuideAttachmentList
+            ref="attachmentListRef"
+            :guide-id="current.id"
+            :can-edit="canEditCurrent"
+          />
+          <FileUploader
+            v-if="canEditCurrent"
+            @uploaded="handleAttachFileUploaded"
+            @error="(m: string) => ElMessage.error(m)"
+          />
+        </section>
+
+        <!-- Mindmap preview dialog -->
+        <el-dialog
+          v-model="showMindmap"
+          title="脑图预览"
+          width="900px"
+          destroy-on-close
+        >
+          <div ref="mindmapContainer" class="mindmap-container"></div>
+          <template #footer>
+            <el-button type="primary" @click="doExport('svg')">导出 SVG</el-button>
+          </template>
+        </el-dialog>
 
         <!-- Related projects -->
         <div v-if="relatedProjects.length > 0" class="related-section">
@@ -461,4 +561,8 @@ onMounted(async () => {
 .related-card:hover { border-color: var(--el-color-primary); }
 .rc-title { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
 .rc-desc { display: block; font-size: 0.76rem; color: var(--lab-muted); }
+
+/* Attachments + mindmap */
+.attachments-section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--el-border-color-lighter); }
+.mindmap-container { width: 100%; min-height: 480px; }
 </style>

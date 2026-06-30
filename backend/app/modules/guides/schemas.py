@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from app.modules.files.schemas import FileOut
 from pydantic import BaseModel, Field
 
 
@@ -46,3 +47,19 @@ class GuideOut(BaseModel):
 class GuideListResponse(BaseModel):
     items: list[GuideOut]
     total: int
+
+
+class GuideAttachmentOut(BaseModel):
+    id: int
+    guide_id: int
+    file_id: int
+    role: str
+    position: int
+    created_at: datetime
+    file: FileOut
+
+    model_config = {"from_attributes": True}
+
+
+# Re-use file attachment schemas from the unified files module
+from app.modules.files.schemas import AttachmentCreate, AttachmentUpdate  # noqa: E402, F401

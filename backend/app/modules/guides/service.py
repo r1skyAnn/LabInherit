@@ -71,7 +71,9 @@ async def update_guide(
     data: dict,
 ) -> Guide:
     guide = await db.execute(
-        select(Guide).where(Guide.id == guide_id)
+        select(Guide)
+        .options(selectinload(Guide.author))
+        .where(Guide.id == guide_id)
     )
     guide = guide.scalar_one_or_none()
     if guide is None:

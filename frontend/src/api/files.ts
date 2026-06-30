@@ -26,6 +26,16 @@ export interface NoteAttachmentOut {
   file: FileOut
 }
 
+export interface GuideAttachmentOut {
+  id: number
+  guide_id: number
+  file_id: number
+  role: AttachmentRole
+  position: number
+  created_at: string
+  file: FileOut
+}
+
 export interface AttachmentCreate {
   file_id: number
   role?: AttachmentRole
@@ -89,6 +99,28 @@ export const noteAttachmentsApi = {
 
   detach(noteId: number, attachmentId: number): AxiosPromise<{ detail: string }> {
     return apiClient.delete(`/files/notes/${noteId}/attachments/${attachmentId}`)
+  },
+}
+
+export const guideAttachmentsApi = {
+  list(guideId: number): AxiosPromise<GuideAttachmentOut[]> {
+    return apiClient.get(`/guides/${guideId}/attachments`)
+  },
+
+  attach(guideId: number, payload: AttachmentCreate): AxiosPromise<GuideAttachmentOut> {
+    return apiClient.post(`/guides/${guideId}/attachments`, payload)
+  },
+
+  update(
+    guideId: number,
+    attachmentId: number,
+    payload: Partial<AttachmentCreate>,
+  ): AxiosPromise<GuideAttachmentOut> {
+    return apiClient.patch(`/guides/${guideId}/attachments/${attachmentId}`, payload)
+  },
+
+  detach(guideId: number, attachmentId: number): AxiosPromise<{ detail: string }> {
+    return apiClient.delete(`/guides/${guideId}/attachments/${attachmentId}`)
   },
 }
 

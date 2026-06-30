@@ -91,3 +91,5 @@ dist/
 
 # Local backup directories (Sage convention: rollback anchors)
 **/.bak/
+# /uploads/ already covered by /backend/uploads/ above; nested LabInherit/ has its own
+LabInherit/backend/uploads/
