@@ -45,13 +45,16 @@ apiClient.interceptors.response.use(
     if (status === 401) {
       localStorage.removeItem('labinherit_token')
       localStorage.removeItem('labinherit_user')
+      // Show a friendly toast on auth failure — covers login errors, expired
+      // tokens, and any API call that rejects a stale session.
+      ElMessage.error(message || '邮箱或密码错误，请重试')
       // Only redirect if not already on an auth page
       if (!router.currentRoute.value.path.startsWith('/auth')) {
         router.push('/auth/login')
       }
     } else if (status === 403) {
       ElMessage.error(message || '权限不足')
-    } else if (status !== 401) {
+    } else {
       ElMessage.error(message)
     }
 

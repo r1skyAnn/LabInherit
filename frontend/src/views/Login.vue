@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -16,6 +17,15 @@ async function handleLogin() {
     await auth.login(form.email, form.password)
     const redirect = (route.query.redirect as string) || '/home'
     router.push(redirect)
+  } catch (err: any) {
+    // The global axios interceptor already shows a toast for 401, but we
+    // surface a friendly message here too in case the error wasn't 401
+    // (e.g. network failure). Skip if the global already handled it.
+    const status = err?.response?.status
+    if (status !== 401) {
+      const msg = err?.response?.data?.error?.message || err?.message || '登录失败，请稍后重试'
+      ElMessage.error(msg)
+    }
   } finally {
     loading.value = false
   }
