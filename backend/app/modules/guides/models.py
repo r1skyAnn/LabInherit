@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -31,7 +32,7 @@ class Guide(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(200), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    content: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=False, default="")
     tag: Mapped[str] = mapped_column(String(32), nullable=False, default="intro", server_default="intro")
     related_projects: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array like "[1,2]"
     sort_order: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

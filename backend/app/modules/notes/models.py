@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, TimestampMixin
@@ -53,7 +54,7 @@ class Note(Base, TimestampMixin):
         index=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    content: Mapped[str] = mapped_column(MEDIUMTEXT, nullable=False, default="")
 
     # Author snapshots — preserved even if the user is later archived
     author_display_name: Mapped[str] = mapped_column(String(64), nullable=False)
