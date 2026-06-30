@@ -86,6 +86,15 @@ function canUpdate() {
   return false
 }
 
+// ── Tag dropdown (existing tags + allow typing a new one) ───────────────────
+const existingTags = computed<string[]>(() => {
+  const set = new Set<string>(['intro'])
+  for (const g of guides.value) {
+    if (g.tag) set.add(g.tag)
+  }
+  return Array.from(set)
+})
+
 const defaultForm = () => ({
   title: editing.value?.title ?? '',
   slug: editing.value?.slug ?? '',
@@ -392,7 +401,34 @@ onMounted(async () => {
           <el-input v-model="form.title" maxlength="200" placeholder="如：Python 环境配置" />
         </el-form-item>
         <el-form-item label="分类标签">
-          <el-input v-model="form.tag" maxlength="32" placeholder="输入标签名，如：工具、课程、规范" />
+          <el-select
+            v-model="form.tag"
+            placeholder="选择已有标签，或在搜索框里输入新标签回车"
+            style="width: 100%"
+            filterable
+            allow-create
+            default-first-option
+          >
+            <el-option
+              v-for="t in existingTags"
+              :key="t"
+              :label="t"
+              :value="t"
+            />
+          </el-select>
+          <div class="tag-hint">
+            <el-tag
+              v-if="form.tag && !existingTags.includes(form.tag)"
+              type="success"
+              size="small"
+              effect="plain"
+            >+ 新标签：{{ form.tag }}（保存后生效）</el-tag>
+            <el-tag
+              v-else-if="form.tag"
+              size="small"
+              effect="plain"
+            >使用已有标签：{{ form.tag }}</el-tag>
+          </div>
         </el-form-item>
         <el-form-item label="正文（Markdown）">
           <el-input v-model="form.content" type="textarea" :rows="12" placeholder="Markdown 格式..." />
@@ -565,4 +601,6 @@ onMounted(async () => {
 /* Attachments + mindmap */
 .attachments-section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--el-border-color-lighter); }
 .mindmap-container { width: 100%; min-height: 480px; }
+
+.tag-hint { margin-top: 0.5rem; min-height: 1.5rem; }
 </style>
