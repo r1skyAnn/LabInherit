@@ -58,8 +58,7 @@ services:
       - labinherit-net
 
   worker:
-    # S0: placeholder that just logs every hour.
-    # S4: replace command with the real email worker.
+    # Email worker that polls email_outbox and sends via SMTP
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -71,7 +70,7 @@ services:
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
-    command: ["python", "-c", "import time, os; print(f'[worker] {os.uname().nodename} placeholder idle'); [time.sleep(3600) for _ in iter(int, 1)]"]
+    command: ["python", "-m", "app.tasks.email_worker"]
     depends_on:
       mysql:
         condition: service_healthy

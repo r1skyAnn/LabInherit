@@ -66,7 +66,7 @@ renderer.code = (code: { text: string; lang?: string | undefined }, lang?: strin
     const auto = hljs.highlightAuto(codeText).value
     return `<pre><code class="hljs">${auto}</code></pre>`
   } catch {
-    return originalCode(code, lang)
+    return originalCode(code as any)
   }
 }
 
@@ -114,7 +114,7 @@ const html = computed(() => {
 .markdown-body :deep(del) { color: var(--el-text-color-secondary); }
 
 /* Inline code */
-.markdown-body :deep(code) {
+.markdown-body :deep(code:not(.hljs)) {
   background: var(--el-fill-color-light);
   padding: 0.15em 0.45em;
   border-radius: 4px;
@@ -136,11 +136,44 @@ const html = computed(() => {
 .markdown-body :deep(pre code) {
   background: none;
   padding: 0;
-  color: inherit;
   font-size: 0.85em;
   border-radius: 0;
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
 }
+
+.markdown-body :deep(pre),
+.markdown-body :deep(pre code),
+.markdown-body :deep(pre code.hljs) {
+  background: #f3f0ea !important;
+  color: #1e1e22 !important;
+}
+.markdown-body :deep(pre code.hljs > *:not([class])) {
+  color: #1e1e22 !important;
+}
+.markdown-body :deep(pre code.hljs .hljs-subst) { color: #1e1e22 !important; }
+.markdown-body :deep(pre code.hljs .hljs-comment),
+.markdown-body :deep(pre code.hljs .hljs-quote) { color: #68717a !important; }
+.markdown-body :deep(pre code.hljs .hljs-keyword),
+.markdown-body :deep(pre code.hljs .hljs-selector-tag),
+.markdown-body :deep(pre code.hljs .hljs-literal),
+.markdown-body :deep(pre code.hljs .hljs-title),
+.markdown-body :deep(pre code.hljs .hljs-section),
+.markdown-body :deep(pre code.hljs .hljs-type) { color: #a12622 !important; }
+.markdown-body :deep(pre code.hljs .hljs-string),
+.markdown-body :deep(pre code.hljs .hljs-attr),
+.markdown-body :deep(pre code.hljs .hljs-symbol),
+.markdown-body :deep(pre code.hljs .hljs-bullet),
+.markdown-body :deep(pre code.hljs .hljs-addition) { color: #17663a !important; }
+.markdown-body :deep(pre code.hljs .hljs-number),
+.markdown-body :deep(pre code.hljs .hljs-regexp),
+.markdown-body :deep(pre code.hljs .hljs-variable),
+.markdown-body :deep(pre code.hljs .hljs-template-variable) { color: #175a9c !important; }
+.markdown-body :deep(pre code.hljs .hljs-built_in),
+.markdown-body :deep(pre code.hljs .hljs-builtin-name),
+.markdown-body :deep(pre code.hljs .hljs-name),
+.markdown-body :deep(pre code.hljs .hljs-selector-id),
+.markdown-body :deep(pre code.hljs .hljs-selector-class) { color: #9a5314 !important; }
+.markdown-body :deep(pre code.hljs .hljs-deletion) { color: #9b2c2c !important; }
 
 /* Lists */
 .markdown-body :deep(ul),

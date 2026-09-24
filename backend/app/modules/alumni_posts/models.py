@@ -44,6 +44,10 @@ class AlumniPost(Base):
 
     author: Mapped["User"] = relationship("User")
 
+    @property
+    def author_display_name(self) -> str | None:
+        return self.author.display_name if self.author else None
+
     __table_args__ = (
         Index("ix_alumni_posts_type", "type"),
         Index("ix_alumni_posts_created_at", "created_at"),

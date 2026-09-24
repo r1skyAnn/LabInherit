@@ -20,19 +20,6 @@ from app.modules.announcements.schemas import (
 router = APIRouter(prefix="/announcements", tags=["announcements"])
 
 
-def _build_out(a: "Announcement") -> AnnouncementOut:
-    return AnnouncementOut(
-        id=a.id,
-        title=a.title,
-        content=a.content,
-        author_id=a.author_id,
-        author_display_name=a.author.display_name if a.author else None,
-        is_pinned=a.is_pinned,
-        created_at=a.created_at,
-        updated_at=a.updated_at,
-    )
-
-
 @router.post("", response_model=AnnouncementOut, summary="发布公告（成员）")
 async def create_announcement(
     payload: AnnouncementCreate,
@@ -44,7 +31,20 @@ async def create_announcement(
         author_id=user.id,
         data=payload.model_dump(exclude_unset=True),
     )
-    return _build_out(ann)
+    # Notify all active members
+    from sqlalchemy import select as sa_select
+    from app.modules.users.models import User, UserStatus
+    from app.modules.notifications.service import create_notification
+    users_result = await db.execute(
+        sa_select(User.id).where(User.status == UserStatus.ACTIVE.value, User.id != user.id)
+    )
+    for (uid,) in users_result.all():
+        await create_notification(db, user_id=uid, type="announcement", payload={
+            "announcement_id": ann.id,
+            "title": ann.title,
+            "author_name": user.display_name,
+        })
+    return AnnouncementOut.model_validate(ann)
 
 
 @router.get("", response_model=AnnouncementListResponse, summary="列出公告")
@@ -57,7 +57,7 @@ async def list_announcements(
         db, page=page, page_size=page_size
     )
     return AnnouncementListResponse(
-        items=[_build_out(a) for a in items],
+        items=[AnnouncementOut.model_validate(a) for a in items],
         total=total,
     )
 
@@ -68,7 +68,7 @@ async def get_announcement(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AnnouncementOut:
     ann = await service.get_announcement(db, announcement_id)
-    return _build_out(ann)
+    return AnnouncementOut.model_validate(ann)
 
 
 @router.patch("/{announcement_id}", response_model=AnnouncementOut, summary="更新公告")
@@ -81,7 +81,7 @@ async def update_announcement(
     ann = await service.update_announcement(
         db, announcement_id, user.id, user.is_owner(), payload.model_dump(exclude_unset=True)
     )
-    return _build_out(ann)
+    return AnnouncementOut.model_validate(ann)
 
 
 @router.delete("/{announcement_id}", summary="删除公告")

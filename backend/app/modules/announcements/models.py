@@ -28,6 +28,10 @@ class Announcement(Base, TimestampMixin):
 
     author: Mapped["User"] = relationship("User")
 
+    @property
+    def author_display_name(self) -> str | None:
+        return self.author.display_name if self.author else None
+
     __table_args__ = (
         Index("ix_announcements_author_id", "author_id"),
     )

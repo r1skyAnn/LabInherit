@@ -49,7 +49,7 @@ class User(Base, TimestampMixin):
         "AuditQueue",
         back_populates="user",
         cascade="all, delete-orphan",
-        foreign_keys="[audit_queue.c.user_id]",
+        foreign_keys="[AuditQueue.user_id]",
     )
     created_invites: Mapped[list["Invite"]] = relationship(
         "Invite",

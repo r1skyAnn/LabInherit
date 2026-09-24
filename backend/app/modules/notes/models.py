@@ -70,6 +70,14 @@ class Note(Base, TimestampMixin):
     project: Mapped["Project"] = relationship("Project")
     category: Mapped["Category | None"] = relationship("Category")
 
+    @property
+    def category_name(self) -> str | None:
+        return self.category.name if self.category else None
+
+    @property
+    def project_title(self) -> str | None:
+        return self.project.title if self.project else None
+
     __table_args__ = (
         Index("ix_notes_project_category", "project_id", "category_id"),
         Index("ix_notes_is_pinned", "is_pinned"),

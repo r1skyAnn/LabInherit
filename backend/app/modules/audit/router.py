@@ -40,4 +40,18 @@ async def decide(
     entry = await service.decide(
         db, entry_id, user, action=payload.action, note=payload.note
     )
+    # Notify the applicant by email
+    from app.core.email import send_email
+    if entry.user_email:
+        action_text = "通过" if payload.action == "approve" else "未通过"
+        await send_email(
+            to=entry.user_email,
+            subject=f"[LabInherit] 你的注册申请已被{action_text}",
+            body_text=(
+                f"你好，{entry.user_display_name}：\n\n"
+                f"你的 LabInherit 注册申请已被管理员{action_text}。\n"
+                + (f"审核备注：{payload.note}\n\n" if payload.note else "\n")
+                + ("你现在可以登录平台了。\n" if payload.action == "approve" else "如有疑问请联系实验室管理员。\n")
+            ),
+        )
     return entry

@@ -22,27 +22,10 @@ from app.modules.notes.schemas import (
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-def _build_out(note, liked: bool = False) -> NoteOut:
-    return NoteOut(
-        id=note.id,
-        project_id=note.project_id,
-        category_id=note.category_id,
-        author_id=note.author_id,
-        title=note.title,
-        content=note.content,
-        author_display_name=note.author_display_name,
-        author_email=note.author_email,
-        author_enrollment_year=note.author_enrollment_year,
-        author_graduation_year=note.author_graduation_year,
-        is_pinned=note.is_pinned,
-        like_count=note.like_count,
-        comment_count=note.comment_count,
-        liked=liked,
-        created_at=note.created_at,
-        updated_at=note.updated_at,
-        category_name=note.category.name if note.category else None,
-        project_title=note.project.title if note.project else None,
-    )
+def _note_out(note, liked: bool = False) -> NoteOut:
+    out = NoteOut.model_validate(note)
+    out.liked = liked
+    return out
 
 
 async def _get_liked_ids(db: AsyncSession, note_ids: list[int], user_id: int) -> set[int]:
@@ -65,7 +48,7 @@ async def create_note(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> NoteOut:
     note = await service.create_note(db, user, payload.model_dump(exclude_unset=True))
-    return _build_out(note)
+    return _note_out(note)
 
 
 @router.get("", response_model=NoteListResponse, summary="列出笔记")
@@ -86,7 +69,7 @@ async def list_notes(
     note_ids = [n.id for n in notes]
     liked_ids = await _get_liked_ids(db, note_ids, user.id)
     return NoteListResponse(
-        items=[_build_out(n, liked=n.id in liked_ids) for n in notes],
+        items=[_note_out(n, liked=n.id in liked_ids) for n in notes],
         total=total,
     )
 
@@ -99,7 +82,7 @@ async def get_note(
 ) -> NoteOut:
     note = await service.get_note(db, note_id)
     liked_ids = await _get_liked_ids(db, [note_id], user.id)
-    return _build_out(note, liked=note_id in liked_ids)
+    return _note_out(note, liked=note_id in liked_ids)
 
 
 @router.patch("/{note_id}", response_model=NoteOut, summary="更新笔记")
@@ -114,7 +97,7 @@ async def update_note(
         payload.model_dump(exclude_unset=True),
     )
     liked_ids = await _get_liked_ids(db, [note_id], user.id)
-    return _build_out(note, liked=note_id in liked_ids)
+    return _note_out(note, liked=note_id in liked_ids)
 
 
 @router.delete("/{note_id}", summary="删除笔记")
@@ -134,7 +117,7 @@ async def like_note(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> NoteOut:
     note = await service.like_note(db, note_id, user.id)
-    return _build_out(note, liked=True)
+    return _note_out(note, liked=True)
 
 
 @router.delete("/{note_id}/like", response_model=NoteOut, summary="取消点赞")
@@ -144,4 +127,4 @@ async def unlike_note(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> NoteOut:
     note = await service.unlike_note(db, note_id, user.id)
-    return _build_out(note)
+    return _note_out(note)

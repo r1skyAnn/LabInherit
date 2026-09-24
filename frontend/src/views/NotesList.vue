@@ -53,6 +53,9 @@ function flattenCats(cats: CategoryOut[], prefix = ''): { id: number; label: str
   return result
 }
 
+const page = ref(1)
+const pageSize = ref(12)
+
 async function load() {
   loading.value = true
   try {
@@ -60,7 +63,8 @@ async function load() {
       project_id: projectId,
       category_id: filterCategory.value ?? undefined,
       q: searchQuery.value || undefined,
-      page_size: 100,
+      page: page.value,
+      page_size: pageSize.value,
     })
     notes.value = resp.data.items
     total.value = resp.data.total
@@ -127,12 +131,12 @@ onMounted(async () => {
 
     <div class="toolbar">
       <div class="toolbar-left">
-        <el-input v-model="searchQuery" placeholder="搜索笔记..." clearable @clear="load" @keyup.enter="load" style="width:240px">
+        <el-input v-model="searchQuery" placeholder="搜索笔记..." clearable @clear="page=1;load()" @keyup.enter="page=1;load()" style="width:240px">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-select v-model="filterCategory" placeholder="全部分类" clearable @change="load" style="width:200px">
+        <el-select v-model="filterCategory" placeholder="全部分类" clearable @change="page=1;load()" style="width:200px">
           <el-option
             v-for="cat in flattenCats(categories)"
             :key="cat.id"
@@ -158,7 +162,18 @@ onMounted(async () => {
       />
     </div>
 
-    <div class="summary">共 {{ total }} 条笔记</div>
+    <div class="summary">
+      共 {{ total }} 条笔记
+      <el-pagination
+        v-if="total > pageSize"
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        @current-change="load"
+        style="margin-top:1rem; justify-content:center"
+      />
+    </div>
 
     <el-dialog v-model="showForm" :title="editingNote ? '编辑笔记' : '新建笔记'" width="720px" destroy-on-close>
       <NoteForm
@@ -176,7 +191,8 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 .page-header h2 {
-  margin: 0.5rem 0 0;
+  margin: 0.5rem 0 0; font-size: 1.15rem; font-weight: 700;
+  padding-left: 0.65rem; border-left: 3px solid var(--ember);
 }
 .toolbar {
   display: flex;

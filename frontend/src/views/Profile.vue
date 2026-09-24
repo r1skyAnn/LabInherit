@@ -2,7 +2,11 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { usersApi } from '@/api/users'
+import { filesApi } from '@/api/files'
 import { ElMessage } from 'element-plus'
+import { Upload, UserFilled } from '@element-plus/icons-vue'
+import type { AxiosResponse } from 'axios'
+import type { FileOut } from '@/api/files'
 
 const auth = useAuthStore()
 
@@ -14,8 +18,11 @@ const profileForm = reactive({
   research_direction: '',
   current_affiliation: '',
   bio: '',
+  avatar_url: null as string | null,
 })
 const profileLoading = ref(false)
+const avatarUploading = ref(false)
+const avatarInput = ref<HTMLInputElement | null>(null)
 
 const pwdForm = reactive({ old_password: '', new_password: '' })
 const pwdLoading = ref(false)
@@ -30,8 +37,30 @@ onMounted(() => {
     profileForm.research_direction = u.profile?.research_direction ?? ''
     profileForm.current_affiliation = u.profile?.current_affiliation ?? ''
     profileForm.bio = u.profile?.bio ?? ''
+    profileForm.avatar_url = u.profile?.avatar_url ?? null
   }
 })
+
+function avatarUrl(url: string | null) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${import.meta.env.VITE_BACKEND_URL ?? ''}${url}`
+}
+
+function triggerAvatar() { avatarInput.value?.click() }
+
+async function handleAvatarUpload(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) { ElMessage.error('仅支持图片格式'); return }
+  avatarUploading.value = true
+  try {
+    const resp: AxiosResponse<FileOut> = await filesApi.upload(file)
+    profileForm.avatar_url = resp.data.url
+    ElMessage.success('头像上传成功，保存后生效')
+  } catch { ElMessage.error('上传失败') }
+  finally { avatarUploading.value = false }
+}
 
 async function saveProfile() {
   profileLoading.value = true
@@ -44,6 +73,7 @@ async function saveProfile() {
       research_direction: profileForm.research_direction || undefined,
       current_affiliation: profileForm.current_affiliation || undefined,
       bio: profileForm.bio || undefined,
+      avatar_url: profileForm.avatar_url ?? undefined,
     })
     auth.user = resp.data
     localStorage.setItem('labinherit_user', JSON.stringify(resp.data))
@@ -69,6 +99,23 @@ async function changePassword() {
 <template>
   <div class="profile-page">
     <h2>个人资料</h2>
+
+    <el-card class="section">
+      <template #header>头像</template>
+      <div class="avatar-section">
+        <div class="avatar-preview">
+          <img v-if="profileForm.avatar_url" :src="avatarUrl(profileForm.avatar_url)" class="avatar-img" />
+          <el-icon v-else class="avatar-placeholder"><UserFilled /></el-icon>
+        </div>
+        <div class="avatar-actions">
+          <el-button :loading="avatarUploading" @click="triggerAvatar">
+            <el-icon><Upload /></el-icon> 上传头像
+          </el-button>
+          <input ref="avatarInput" type="file" accept="image/*" style="display:none" @change="handleAvatarUpload" />
+          <p class="avatar-hint">支持 JPG / PNG / WebP，保存后生效</p>
+        </div>
+      </div>
+    </el-card>
 
     <el-card class="section">
       <template #header>基本信息</template>
@@ -137,5 +184,38 @@ async function changePassword() {
 }
 .section {
   margin-bottom: 1.5rem;
+}
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.avatar-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--el-fill-color-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-placeholder {
+  font-size: 2rem;
+  color: var(--el-text-color-placeholder);
+}
+.avatar-actions {
+  flex: 1;
+}
+.avatar-hint {
+  font-size: 0.78rem;
+  color: var(--el-text-color-secondary);
+  margin: 0.35rem 0 0;
 }
 </style>

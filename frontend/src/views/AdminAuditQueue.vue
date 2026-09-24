@@ -7,14 +7,16 @@ const entries = ref<AuditEntryOut[]>([])
 const total = ref(0)
 const loading = ref(false)
 const filterStatus = ref<string>('pending')
+const page = ref(1)
+const pageSize = ref(20)
 
 async function load() {
   loading.value = true
   try {
     const resp = await adminApi.listAuditQueue({
       status: filterStatus.value || undefined,
-      page: 1,
-      page_size: 100,
+      page: page.value,
+      page_size: pageSize.value,
     })
     entries.value = resp.data.items
     total.value = resp.data.total
@@ -49,7 +51,7 @@ onMounted(load)
   <div class="audit-page">
     <h2>审核队列</h2>
 
-    <el-radio-group v-model="filterStatus" @change="load" style="margin-bottom:1rem">
+    <el-radio-group v-model="filterStatus" @change="page=1;load()" style="margin-bottom:1rem">
       <el-radio-button value="pending">待审核</el-radio-button>
       <el-radio-button value="approved">已批准</el-radio-button>
       <el-radio-button value="rejected">已拒绝</el-radio-button>

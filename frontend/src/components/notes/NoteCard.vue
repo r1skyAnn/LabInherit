@@ -67,60 +67,38 @@ function formatDate(d: string) {
 
 <style scoped>
 .note-card {
-  border-radius: 8px;
-  transition: transform 0.15s;
+  border-radius: 6px !important;
+  border: 1px solid var(--el-border-color-light) !important;
+  border-left: 3px solid transparent !important;
+  transition: transform 0.15s, box-shadow 0.15s, border-left-color 0.2s !important;
 }
 .note-card:hover {
-  transform: translateY(-2px);
+  transform: translateX(2px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+  border-left-color: var(--ember) !important;
 }
 .note-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.5rem; margin-bottom: 0.4rem;
 }
 .note-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  text-decoration: none;
-  flex: 1;
+  font-size: 1rem; font-weight: 600; color: var(--ink);
+  text-decoration: none; flex: 1;
 }
-.note-title:hover {
-  color: var(--el-color-primary);
-}
-.note-tags {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
+.note-title:hover { color: var(--ember); }
+.note-tags { display: flex; gap: 0.2rem; flex-shrink: 0; }
 .note-preview {
-  font-size: 0.85rem;
-  color: var(--el-text-color-secondary);
-  line-height: 1.5;
-  margin-bottom: 0.75rem;
+  font-size: 0.83rem; color: var(--stone); line-height: 1.5;
+  margin-bottom: 0.6rem;
 }
 .note-meta {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.78rem;
-  color: var(--lab-muted);
-  margin-bottom: 0.5rem;
+  display: flex; gap: 0.75rem; font-size: 0.76rem;
+  color: var(--stone); margin-bottom: 0.4rem;
 }
-.meta-email {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
+.meta-email { font-size: 0.73rem; opacity: 0.7; }
 .note-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 0.45rem; border-top: 1px solid var(--el-border-color-extra-light);
 }
-.footer-actions {
-  display: flex;
-  gap: 0.25rem;
-}
+.footer-actions { display: flex; gap: 0.15rem; }
 </style>

@@ -11,7 +11,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    pass
+
+try:
     from app.modules.users.models import User
+except ImportError:
+    User = None  # type: ignore
 
 
 class Notification(Base):

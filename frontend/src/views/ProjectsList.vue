@@ -13,20 +13,27 @@ const loading = ref(false)
 const filterStatus = ref<string>('')
 const showForm = ref(false)
 const editingProject = ref<ProjectOut | null>(null)
+const page = ref(1)
+const pageSize = ref(12)
 
 async function load() {
   loading.value = true
   try {
     const resp = await projectsApi.list({
       status: filterStatus.value || undefined,
-      page: 1,
-      page_size: 100,
+      page: page.value,
+      page_size: pageSize.value,
     })
     projects.value = resp.data.items
     total.value = resp.data.total
   } finally {
     loading.value = false
   }
+}
+
+function handlePageChange(p: number) {
+  page.value = p
+  load()
 }
 
 function openCreate() {
@@ -63,7 +70,7 @@ onMounted(load)
     <div class="page-header">
       <h2>项目列表</h2>
       <div class="header-actions">
-        <el-select v-model="filterStatus" @change="load" clearable placeholder="全部状态" style="width:150px">
+        <el-select v-model="filterStatus" @change="handlePageChange(1)" clearable placeholder="全部状态" style="width:150px">
           <el-option label="全部状态" value="" />
           <el-option label="规划中" value="planning" />
           <el-option label="进行中" value="active" />
@@ -88,7 +95,18 @@ onMounted(load)
       />
     </div>
 
-    <div class="summary">共 {{ total }} 个项目</div>
+    <div class="summary">
+      共 {{ total }} 个项目
+      <el-pagination
+        v-if="total > pageSize"
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        @current-change="handlePageChange"
+        style="margin-top:1rem; justify-content:center"
+      />
+    </div>
 
     <el-dialog v-model="showForm" :title="editingProject ? '编辑项目' : '新建项目'" width="600px">
       <ProjectForm :project="editingProject" @saved="handleSaved" @cancel="showForm = false" />
@@ -103,14 +121,12 @@ onMounted(load)
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 1.5rem;
 }
-
 .page-header h2 {
-  margin: 0;
+  margin: 0; font-size: 1.15rem; font-weight: 700;
+  padding-left: 0.65rem; border-left: 3px solid var(--ember);
 }
 
 .header-actions {

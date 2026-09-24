@@ -3,13 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { showcaseApi, type ShowcaseOut, type ShowcaseCreate } from '@/api/showcase'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download } from '@element-plus/icons-vue'
+import { Plus, Download, Edit } from '@element-plus/icons-vue'
 
 const auth = useAuthStore()
 const items = ref<ShowcaseOut[]>([])
 const loading = ref(false)
 const activeTab = ref<'achievement' | 'blessing'>('achievement')
 const showDialog = ref(false)
+const isEditing = ref(false)
+const editingId = ref<number | null>(null)
 const showBlessingHint = ref(false)
 const fileUploading = ref(false)
 const pdfUploading = ref(false)
@@ -47,10 +49,16 @@ function canAddBlessing() {
   return false
 }
 
+const page = ref(1)
+const pageSize = ref(12)
+const total = ref(0)
+
 async function load() {
   loading.value = true
   try {
-    items.value = (await showcaseApi.list({ page_size: 100 })).data.items
+    const resp = await showcaseApi.list({ page: page.value, page_size: pageSize.value })
+    items.value = resp.data.items
+    total.value = resp.data.total
   } finally {
     loading.value = false
   }
@@ -58,6 +66,8 @@ async function load() {
 
 function handleTabChange(tab: string) {
   activeTab.value = tab as 'achievement' | 'blessing'
+  page.value = 1
+  load()
 }
 
 function openAdd() {
@@ -65,8 +75,26 @@ function openAdd() {
     showBlessingHint.value = true
     return
   }
+  isEditing.value = false
+  editingId.value = null
   form.value = defaultForm()
   showDialog.value = true
+}
+
+function openEdit(item: ShowcaseOut) {
+  isEditing.value = true
+  editingId.value = item.id
+  form.value = {
+    type: item.type,
+    title: item.title,
+    description: item.description,
+    image_url: item.image_url,
+    pdf_url: item.pdf_url,
+    contact_info: item.contact_info,
+    experience: item.experience,
+  }
+  showDialog.value = true
+  showDetail.value = false
 }
 
 function openDetail(item: ShowcaseOut) {
@@ -77,14 +105,16 @@ function openDetail(item: ShowcaseOut) {
 function getImageUrl(url: string | null) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return `${import.meta.env.VITE_API_BASE ?? '/api/v1'}${url}`
+  return `${import.meta.env.VITE_BACKEND_URL ?? ''}${url}`
 }
 
 function getDownloadUrl(url: string | null) {
   if (!url) return ''
   if (url.startsWith('http')) return url
-  return `${import.meta.env.VITE_API_BASE ?? '/api/v1'}${url}`
+  return `${import.meta.env.VITE_BACKEND_URL ?? ''}${url}`
 }
+
+const apiBase = import.meta.env.VITE_API_BASE ?? '/api/v1'
 
 function triggerImage() { imgInput.value?.click() }
 function triggerPdf() { pdfInput.value?.click() }
@@ -96,7 +126,7 @@ async function handleImageUpload(e: Event) {
   fileUploading.value = true
   try {
     const fd = new FormData(); fd.append('file', file)
-    const resp = await fetch('/api/v1/upload', {
+    const resp = await fetch(`${apiBase}/upload`, {
       method: 'POST', headers: { Authorization: `Bearer ${auth.token}` }, body: fd,
     })
     if (!resp.ok) throw new Error('upload failed')
@@ -114,7 +144,7 @@ async function handlePdfUpload(e: Event) {
   pdfUploading.value = true
   try {
     const fd = new FormData(); fd.append('file', file)
-    const resp = await fetch('/api/v1/upload', {
+    const resp = await fetch(`${apiBase}/upload`, {
       method: 'POST', headers: { Authorization: `Bearer ${auth.token}` }, body: fd,
     })
     if (!resp.ok) throw new Error('upload failed')
@@ -127,10 +157,22 @@ async function handlePdfUpload(e: Event) {
 
 async function handleSubmit() {
   if (activeTab.value === 'achievement' && !form.value.title.trim()) return
-  form.value.type = activeTab.value
   try {
-    await showcaseApi.create(form.value)
-    ElMessage.success(activeTab.value === 'achievement' ? '成果已发布' : '寄语已发布')
+    if (isEditing.value && editingId.value !== null) {
+      await showcaseApi.update(editingId.value, {
+        title: form.value.title,
+        description: form.value.description,
+        image_url: form.value.image_url,
+        pdf_url: form.value.pdf_url,
+        contact_info: form.value.contact_info,
+        experience: form.value.experience,
+      })
+      ElMessage.success('已更新')
+    } else {
+      form.value.type = activeTab.value
+      await showcaseApi.create(form.value)
+      ElMessage.success(activeTab.value === 'achievement' ? '成果已发布' : '寄语已发布')
+    }
     showDialog.value = false
     await load()
   } catch (e: any) {
@@ -243,22 +285,36 @@ onMounted(load)
           <span>📬 联系方式：{{ detailItem.contact_info }}</span>
         </div>
         <div class="detail-action-bar" v-if="detailItem.author_id === auth.user?.id || auth.isOwner">
+          <el-button type="primary" plain size="small" :icon="Edit" @click="openEdit(detailItem)">编辑</el-button>
           <el-button type="danger" plain size="small" @click="handleDelete(detailItem)">删除</el-button>
         </div>
       </template>
     </el-dialog>
 
+    <div class="summary" v-if="total > 0">
+      共 {{ total }} 条
+      <el-pagination
+        v-if="total > pageSize"
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        @current-change="load"
+        style="margin-top:1rem; justify-content:center"
+      />
+    </div>
+
     <!-- Add Dialog -->
     <el-dialog
       v-model="showDialog"
-      :title="activeTab === 'achievement' ? '添加成果' : '留下寄语'"
+      :title="isEditing ? '编辑' : (activeTab === 'achievement' ? '添加成果' : '留下寄语')"
       width="550px" destroy-on-close
     >
       <el-form label-position="top">
-        <el-form-item label="标题" required v-if="activeTab === 'achievement'">
+        <el-form-item label="标题" required v-if="activeTab === 'achievement' || isEditing">
           <el-input v-model="form.title" maxlength="200" placeholder="论文/专利/软著名称" />
         </el-form-item>
-        <el-form-item label="小标题（可选）" v-if="activeTab === 'blessing'">
+        <el-form-item label="小标题（可选）" v-if="activeTab === 'blessing' && !isEditing">
           <el-input v-model="form.title" maxlength="200" placeholder="如：给师弟师妹的话" />
         </el-form-item>
         <el-form-item :label="activeTab === 'achievement' ? '描述' : '寄语'" required>
@@ -275,26 +331,26 @@ onMounted(load)
             <input ref="imgInput" type="file" accept="image/*" style="display:none" @change="handleImageUpload" />
           </div>
         </el-form-item>
-        <el-form-item label="PDF 附件" v-if="activeTab === 'achievement'">
+        <el-form-item label="PDF 附件" v-if="activeTab === 'achievement' || isEditing">
           <div class="upload-row">
             <el-button :loading="pdfUploading" @click="triggerPdf">选择PDF</el-button>
             <span v-if="form.pdf_url" class="upload-ok">✓ 已上传</span>
             <input ref="pdfInput" type="file" accept=".pdf" style="display:none" @change="handlePdfUpload" />
           </div>
         </el-form-item>
-        <el-form-item label="经验分享" v-if="activeTab === 'achievement'">
+        <el-form-item label="经验分享" v-if="activeTab === 'achievement' || isEditing">
           <el-input
             v-model="form.experience" type="textarea" :rows="3"
             placeholder="分享你做这个成果过程中的经验、踩过的坑、给后来人的建议..."
           />
         </el-form-item>
-        <el-form-item label="联系方式" v-if="activeTab === 'blessing'">
+        <el-form-item label="联系方式" v-if="activeTab === 'blessing' || isEditing">
           <el-input v-model="form.contact_info" maxlength="256" placeholder="微信 / 邮箱 / 手机，方便师弟师妹联系你" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">发布</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ isEditing ? '保存' : '发布' }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -305,6 +361,9 @@ onMounted(load)
 
 .page-header {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;
+}
+.header-tabs :deep(.el-radio-button__inner) {
+  font-weight: 500;
 }
 
 /* ── Achievement cards ──────────────────── */
@@ -398,6 +457,9 @@ onMounted(load)
 }
 .detail-actions { margin-top: 1rem; }
 .detail-action-bar { margin-top: 1rem; text-align: right; }
+
+/* ── Summary ─────────────────────────── */
+.summary { margin-top: 1rem; color: var(--lab-muted); font-size: 0.85rem; text-align: center; }
 
 /* ── Form ──────────────────────────────── */
 .upload-row { display: flex; align-items: center; gap: 0.75rem; }

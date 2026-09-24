@@ -15,7 +15,7 @@ from app.core.deps import CurrentUser
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.db.session import get_db
 from app.modules.files import service
-from app.modules.files.models import File
+from app.modules.files.models import File, NoteAttachment
 from app.modules.files.schemas import (
     AttachmentCreate,
     AttachmentUpdate,
@@ -24,6 +24,7 @@ from app.modules.files.schemas import (
 )
 from app.modules.notes.models import Note
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/files", tags=["files"])
 

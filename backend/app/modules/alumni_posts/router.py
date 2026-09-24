@@ -21,23 +21,6 @@ from app.modules.users.models import UserRole, UserStatus
 router = APIRouter(prefix="/alumni-posts", tags=["alumni-posts"])
 
 
-def _build_out(post: "AlumniPost") -> AlumniPostOut:
-    return AlumniPostOut(
-        id=post.id,
-        author_id=post.author_id,
-        author_display_name=post.author.display_name if post.author else None,
-        type=post.type,
-        title=post.title,
-        content=post.content,
-        company=post.company,
-        position=post.position,
-        contact_info=post.contact_info,
-        tags=post.tags,
-        created_at=post.created_at,
-        updated_at=post.updated_at,
-    )
-
-
 @router.post("", response_model=AlumniPostOut, summary="创建毕业人员帖子")
 async def create_alumni_post(
     payload: AlumniPostCreate,
@@ -53,7 +36,7 @@ async def create_alumni_post(
         author_id=user.id,
         data=payload.model_dump(exclude_unset=True),
     )
-    return _build_out(post)
+    return AlumniPostOut.model_validate(post)
 
 
 @router.get("", response_model=AlumniPostListResponse, summary="列出毕业人员帖子")
@@ -67,7 +50,7 @@ async def list_alumni_posts(
         db, post_type=type, page=page, page_size=page_size
     )
     return AlumniPostListResponse(
-        items=[_build_out(p) for p in posts],
+        items=[AlumniPostOut.model_validate(p) for p in posts],
         total=total,
     )
 
@@ -78,7 +61,7 @@ async def get_alumni_post(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> AlumniPostOut:
     post = await service.get_alumni_post(db, post_id)
-    return _build_out(post)
+    return AlumniPostOut.model_validate(post)
 
 
 @router.patch("/{post_id}", response_model=AlumniPostOut, summary="更新帖子")
@@ -91,7 +74,7 @@ async def update_alumni_post(
     post = await service.update_alumni_post(
         db, post_id, user.id, user.is_owner(), payload.model_dump(exclude_unset=True)
     )
-    return _build_out(post)
+    return AlumniPostOut.model_validate(post)
 
 
 @router.delete("/{post_id}", summary="删除帖子")

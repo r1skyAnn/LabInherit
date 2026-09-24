@@ -11,11 +11,13 @@ const members = ref<MemberOut[]>([])
 const total = ref(0)
 const loading = ref(false)
 const search = ref('')
+const page = ref(1)
+const pageSize = ref(20)
 
 async function load() {
   loading.value = true
   try {
-    const resp = await membersApi.list({ search: search.value || undefined, page: 1, page_size: 200 })
+    const resp = await membersApi.list({ search: search.value || undefined, page: page.value, page_size: pageSize.value })
     members.value = resp.data.items
     total.value = resp.data.total
   } finally {
@@ -73,6 +75,7 @@ async function handleChangeStatus(user: MemberOut, status: string) {
 
 let searchTimer: ReturnType<typeof setTimeout>
 function handleSearch() {
+  page.value = 1
   clearTimeout(searchTimer)
   searchTimer = setTimeout(load, 350)
 }
@@ -180,13 +183,32 @@ onMounted(load)
       </el-table-column>
     </el-table>
 
-    <div class="summary">共 {{ total }} 位成员</div>
+    <div class="summary">
+      共 {{ total }} 位成员
+      <el-pagination
+        v-if="total > pageSize"
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        @current-change="load"
+        style="margin-top:1rem; justify-content:center"
+      />
+    </div>
   </div>
 </template>
 
 
 <style scoped>
 .members-page { max-width: 1200px; margin: 0 auto; }
+.page-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;
+}
+.page-header h2 {
+  margin: 0; font-size: 1.15rem; font-weight: 700;
+  padding-left: 0.65rem; border-left: 3px solid var(--ember);
+}
+.header-actions { display: flex; gap: 0.75rem; }
 
 .page-header {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;

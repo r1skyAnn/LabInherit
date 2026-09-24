@@ -1,0 +1,20 @@
+[Unit]
+Description=LabInherit Email Worker Service
+After=network.target mysql.service labinherit-backend.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/project/LabInherit/backend
+Environment="PATH=/root/.conda/envs/lab/bin:/usr/local/bin:/usr/bin:/bin"
+
+ExecStart=/root/.conda/envs/lab/bin/python -m app.tasks.email_worker
+
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

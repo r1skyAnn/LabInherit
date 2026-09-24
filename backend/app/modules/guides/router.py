@@ -30,7 +30,6 @@ router = APIRouter(prefix="/guides", tags=["guides"])
 
 
 def _can_create(user) -> bool:
-    if user.role == "owner": return True
     if user.is_owner(): return True
     if user.status == "graduated": return True
     if user.profile and user.profile.enrollment_year:
@@ -40,30 +39,12 @@ def _can_create(user) -> bool:
 
 
 def _can_update(user) -> bool:
-    if user.role == "owner": return True
     if user.is_owner(): return True
     if user.status == "graduated": return False
     if user.profile and user.profile.enrollment_year:
         from datetime import datetime
         return datetime.utcnow().year - user.profile.enrollment_year >= 2
     return False
-
-
-def _build_out(guide) -> GuideOut:
-    return GuideOut(
-        id=guide.id,
-        title=guide.title,
-        slug=guide.slug,
-        content=guide.content,
-        tag=guide.tag,
-        related_projects=guide.related_projects,
-        sort_order=guide.sort_order,
-        is_pinned=guide.is_pinned,
-        author_id=guide.author_id,
-        author_name=guide.author.display_name if guide.author else "",
-        created_at=guide.created_at,
-        updated_at=guide.updated_at,
-    )
 
 
 def _att_to_out(att: GuideAttachment) -> GuideAttachmentOut:
@@ -84,7 +65,7 @@ async def list_guides(
     tag: str | None = Query(None),
 ) -> GuideListResponse:
     items = await service.list_guides(db, tag=tag)
-    return GuideListResponse(items=[_build_out(g) for g in items], total=len(items))
+    return GuideListResponse(items=[GuideOut.model_validate(g) for g in items], total=len(items))
 
 
 @router.get("/{slug}", response_model=GuideOut, summary="获取指南详情")
@@ -93,7 +74,7 @@ async def get_guide(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> GuideOut:
     guide = await service.get_guide(db, slug)
-    return _build_out(guide)
+    return GuideOut.model_validate(guide)
 
 
 @router.post("", response_model=GuideOut, summary="创建指南")
@@ -105,7 +86,7 @@ async def create_guide(
     if not _can_create(user):
         raise PermissionDeniedError("只有导师、师兄（入学2年以上）或已毕业成员可以创建指南")
     guide = await service.create_guide(db, author_id=user.id, data=payload.model_dump(exclude_unset=True))
-    return _build_out(guide)
+    return GuideOut.model_validate(guide)
 
 
 @router.patch("/{guide_id}", response_model=GuideOut, summary="更新指南")
@@ -118,7 +99,7 @@ async def update_guide(
     if not _can_update(user):
         raise PermissionDeniedError("毕业成员只能添加不能修改，导师和师兄可以编辑")
     guide = await service.update_guide(db, guide_id, user.id, _can_update(user), payload.model_dump(exclude_unset=True))
-    return _build_out(guide)
+    return GuideOut.model_validate(guide)
 
 
 @router.delete("/{guide_id}", summary="删除指南")
@@ -127,7 +108,7 @@ async def delete_guide(
     user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    if user.role != "owner":
+    if not user.is_owner():
         raise PermissionDeniedError("只有导师可以删除指南")
     await service.delete_guide(db, guide_id, user.id, True)
     return {"detail": "已删除"}
@@ -173,7 +154,7 @@ async def add_guide_attachment(
     if guide is None:
         raise NotFoundError("指南不存在")
     # Only guide author or owner-role can attach
-    if guide.author_id != user.id and not user.is_owner() and user.role != "owner":
+    if guide.author_id != user.id and not user.is_owner():
         raise PermissionDeniedError("只有指南作者可以附加文件")
     # Verify file exists
     file = await files_service.get_file(db, payload.file_id)
@@ -220,7 +201,6 @@ async def update_guide_attachment(
     if guide is None or (
         guide.author_id != user.id
         and not user.is_owner()
-        and user.role != "owner"
     ):
         raise PermissionDeniedError("无权编辑此附件")
     if payload.role is not None:
@@ -255,7 +235,6 @@ async def remove_guide_attachment(
     if guide is None or (
         guide.author_id != user.id
         and not user.is_owner()
-        and user.role != "owner"
     ):
         raise PermissionDeniedError("无权移除此附件")
     await db.delete(att)

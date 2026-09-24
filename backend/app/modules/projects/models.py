@@ -83,6 +83,18 @@ class Project(Base, TimestampMixin):
     def is_active(self) -> bool:
         return self.status == ProjectStatus.ACTIVE.value
 
+    @property
+    def category_name(self) -> str | None:
+        return self.category.name if self.category else None
+
+    @property
+    def creator_display_name(self) -> str | None:
+        return self.creator.display_name if self.creator else None
+
+    @property
+    def allowed_viewer_ids(self) -> list[int]:
+        return [v.user_id for v in self.allowed_viewers]
+
 
 class ProjectViewer(Base):
     """Users allowed to view a private project."""

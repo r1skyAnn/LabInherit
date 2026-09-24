@@ -462,145 +462,114 @@ onMounted(async () => {
   display: flex; gap: 1.5rem; max-width: 1200px; margin: 0 auto; height: calc(100vh - 120px);
 }
 
-/* Sidebar */
+/* ── Sidebar ────────────────────────────── */
 .guide-sidebar {
   width: 260px; flex-shrink: 0; display: flex; flex-direction: column;
-  background: var(--el-bg-color); border-radius: 12px; padding: 1rem 0.85rem;
-  border: 1px solid var(--el-border-color-lighter); overflow-y: auto;
+  background: #fefdf9; border-radius: 6px; padding: 1rem 0.85rem;
+  border: 1px solid var(--el-border-color-light); overflow-y: auto;
 }
 .guide-tags {
   display: flex; flex-wrap: wrap; gap: 0.35rem;
   padding: 0 0.15rem 0.75rem;
   margin-bottom: 0.5rem;
-  border-bottom: 1px dashed var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-extra-light);
 }
 .tag-tab {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  padding: 0.35rem 0.7rem; border-radius: 14px; cursor: pointer;
-  font-size: 0.8rem; transition: background 0.15s, color 0.15s;
-  color: var(--el-text-color-regular);
-  background: var(--el-fill-color-blank);
-  border: 1px solid var(--el-border-color-lighter);
+  padding: 0.3rem 0.65rem; border-radius: 4px; cursor: pointer;
+  font-size: 0.78rem; transition: background 0.15s, color 0.15s;
+  color: var(--stone); background: transparent;
+  border: 1px solid transparent;
 }
-.tag-tab:hover { background: var(--el-fill-color-light); }
+.tag-tab:hover { background: var(--glow); color: var(--ember); }
 .tag-tab.active {
-  background: var(--el-color-primary);
-  color: white;
-  border-color: var(--el-color-primary);
-  font-weight: 600;
+  background: var(--ember); color: #fff;
+  border-color: var(--ember); font-weight: 600;
 }
-.tag-icon { font-size: 1rem; }
-.tag-label { white-space: nowrap; }
 
 .guide-list {
   flex: 1; display: flex; flex-direction: column; overflow-y: auto;
   padding: 0 0.15rem;
 }
-.g-empty { text-align: center; color: var(--lab-muted); padding: 1.5rem 0; font-size: 0.85rem; }
+.g-empty { text-align: center; color: var(--stone); padding: 1.5rem 0; font-size: 0.85rem; }
 
-/* Accordion */
-.accordion-group {
-  margin-bottom: 0.4rem;
-}
+.accordion-group { margin-bottom: 0.3rem; }
 .accordion-header {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  transition: background 0.15s;
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.65rem; border-radius: 4px;
+  cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  color: var(--ink); transition: background 0.15s;
   user-select: none;
-  background: var(--el-fill-color-blank);
-  border: 1px solid transparent;
 }
-.accordion-header:hover {
-  background: var(--el-fill-color-light);
-  border-color: var(--el-border-color-lighter);
-}
+.accordion-header:hover { background: var(--glow); }
 .accordion-header.active {
-  background: var(--el-color-primary-light-9);
-  border-color: var(--el-color-primary-light-7);
-  color: var(--el-color-primary);
+  background: var(--glow); color: var(--ember);
 }
 .accordion-arrow {
-  font-size: 0.78rem;
-  transition: transform 0.2s;
-  color: var(--lab-muted);
-  flex-shrink: 0;
+  font-size: 0.7rem; transition: transform 0.2s;
+  color: var(--stone); flex-shrink: 0;
 }
-.accordion-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.accordion-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .accordion-items {
-  padding-left: 1.25rem;
-  margin: 0.25rem 0 0.4rem 0.5rem;
-  border-left: 2px solid var(--el-border-color-lighter);
+  padding-left: 1.25rem; margin: 0.2rem 0 0.35rem 0.5rem;
+  border-left: 2px solid var(--el-border-color-extra-light);
 }
 
-/* Guide items */
 .guide-item {
-  padding: 0.45rem 0.75rem;
-  margin: 0.15rem 0;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.84rem;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  padding: 0.4rem 0.65rem; margin: 0.1rem 0; border-radius: 4px;
+  cursor: pointer; font-size: 0.82rem; display: flex;
+  align-items: center; gap: 0.35rem;
   transition: background 0.15s, color 0.15s;
-  color: var(--el-text-color-regular);
-  position: relative;
+  color: var(--stone); position: relative;
 }
 .guide-item::before {
-  content: '';
-  position: absolute;
-  left: -1.25rem;
-  top: 50%;
-  width: 0.65rem;
-  height: 1px;
-  background: var(--el-border-color-lighter);
-  pointer-events: none;
+  content: ''; position: absolute;
+  left: -1.25rem; top: 50%; width: 0.65rem; height: 1px;
+  background: var(--el-border-color-extra-light); pointer-events: none;
 }
-.guide-item:hover { background: var(--el-fill-color-light); color: var(--el-text-color-primary); }
-.guide-item.active { background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-weight: 600; }
+.guide-item:hover { background: var(--glow); color: var(--ink); }
+.guide-item.active {
+  background: var(--glow); color: var(--ember); font-weight: 600;
+  border-left: 3px solid var(--ember);
+  margin-left: -3px; border-radius: 0 4px 4px 0;
+}
 .gi-pin { font-size: 0.7rem; flex-shrink: 0; }
 .gi-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Main */
+/* ── Main content ───────────────────────── */
 .guide-main {
-  flex: 1; overflow-y: auto; background: var(--el-bg-color);
-  border-radius: 12px; padding: 1.5rem 2rem;
-  border: 1px solid var(--el-border-color-lighter);
+  flex: 1; overflow-y: auto;
+  background: #fefdf9; border-radius: 6px; padding: 1.75rem 2rem;
+  border: 1px solid var(--el-border-color-light);
   min-height: 400px;
 }
-.guide-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-.guide-header h2 { margin: 0; font-size: 1.3rem; }
+.guide-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+.guide-header h2 {
+  margin: 0; font-size: 1.2rem; font-weight: 700;
+  padding-left: 0.65rem; border-left: 3px solid var(--ember);
+  line-height: 1.3;
+}
 .guide-actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
-.guide-content { line-height: 1.7; }
-.guide-empty { text-align: center; color: var(--lab-muted); padding: 3rem 0; font-size: 0.95rem; }
+.guide-content { line-height: 1.75; }
+.guide-empty { text-align: center; color: var(--stone); padding: 3rem 0; font-size: 0.95rem; }
 
-/* Related projects */
-.related-section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--el-border-color-lighter); }
-.related-section h4 { margin: 0 0 0.75rem; font-size: 0.95rem; }
+/* ── Related projects ───────────────────── */
+.related-section { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--el-border-color-extra-light); }
+.related-section h4 { margin: 0 0 0.65rem; font-size: 0.9rem; color: var(--stone); }
 .related-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; }
 .related-card {
-  padding: 0.75rem; border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px; cursor: pointer; transition: border-color 0.15s;
+  padding: 0.65rem 0.8rem; border: 1px solid var(--el-border-color-light);
+  border-radius: 4px; cursor: pointer; transition: border-color 0.15s, transform 0.15s;
 }
-.related-card:hover { border-color: var(--el-color-primary); }
-.rc-title { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
-.rc-desc { display: block; font-size: 0.76rem; color: var(--lab-muted); }
+.related-card:hover { border-color: var(--ember); transform: translateX(2px); }
+.rc-title { display: block; font-size: 0.84rem; font-weight: 600; margin-bottom: 0.15rem; }
+.rc-desc { display: block; font-size: 0.74rem; color: var(--stone); }
 
-/* Attachments + mindmap */
-.attachments-section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--el-border-color-lighter); }
+/* ── Attachments ────────────────────────── */
+.attachments-section { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--el-border-color-extra-light); }
 .mindmap-container { width: 100%; min-height: 480px; }
-
 .tag-hint { margin-top: 0.5rem; min-height: 1.5rem; }
 </style>

@@ -37,4 +37,22 @@ class ShowcaseItem(Base):
 
     author: Mapped["User"] = relationship("User")
 
+    @property
+    def author_name(self) -> str:
+        return self.author.display_name if self.author else ""
+
+    @property
+    def author_email(self) -> str:
+        return self.author.email if self.author else ""
+
+    @property
+    def author_enrollment_year(self) -> int | None:
+        profile = self.author.profile if self.author else None
+        return profile.enrollment_year if profile else None
+
+    @property
+    def author_graduation_year(self) -> int | None:
+        profile = self.author.profile if self.author else None
+        return profile.graduation_year if profile else None
+
     __table_args__ = (Index("ix_showcase_type", "type"),)

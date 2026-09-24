@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import EmberLogo from '@/components/EmberLogo.vue'
 </script>
 
 <template>
   <div class="auth-container">
     <div class="auth-logo">
-      <h1>🔬 LabInherit</h1>
-      <p class="auth-subtitle">实验室薪火传舵平台</p>
+      <EmberLogo />
+      <h1>薪火相传</h1>
+      <p class="auth-subtitle">实验室知识传承平台</p>
     </div>
     <div class="auth-card">
       <RouterView />
@@ -21,35 +23,47 @@ import { RouterView } from 'vue-router'
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(194, 81, 26, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(61, 114, 81, 0.04) 0%, transparent 60%),
+    var(--parchment);
   padding: 1rem;
 }
 
 .auth-logo {
   text-align: center;
-  margin-bottom: 1.5rem;
-  color: white;
+  margin-bottom: 1.75rem;
+}
+
+.auth-logo :deep(.ember-logo) {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 0.5rem;
 }
 
 .auth-logo h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 700;
-  letter-spacing: -0.5px;
+  color: var(--ink);
+  letter-spacing: 0.05em;
 }
 
 .auth-subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.95rem;
-  opacity: 0.85;
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: var(--stone);
 }
 
 .auth-card {
-  background: white;
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 12px;
   padding: 2rem 2.5rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 40px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--el-border-color-light);
 }
 </style>

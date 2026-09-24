@@ -46,6 +46,11 @@ class Guide(Base):
     )
 
     author: Mapped["User"] = relationship("User")
+
+    @property
+    def author_name(self) -> str:
+        return self.author.display_name if self.author else ""
+
     attachments: Mapped[list["GuideAttachment"]] = relationship(
         "GuideAttachment", back_populates="guide", cascade="all, delete-orphan"
     )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -188,5 +188,11 @@ async def delete_category(
     category = await get_category(db, category_id)
     if category.created_by != user_id and not is_owner:
         raise PermissionDeniedError("只有分类创建者可以删除")
-    await db.delete(category)
+
+    # Cascade-delete all descendants to avoid orphaned materialized paths
+    await db.execute(
+        delete(Category).where(
+            or_(Category.path == category.path, Category.path.startswith(category.path + "/"))
+        )
+    )
     await db.commit()

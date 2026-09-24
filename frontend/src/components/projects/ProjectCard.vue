@@ -94,92 +94,47 @@ function formatDate(d: string | null) {
 
 <style scoped>
 .project-card {
-  border-radius: 8px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 6px !important;
+  border: 1px solid var(--el-border-color-light) !important;
+  border-left: 3px solid transparent !important;
+  transition: transform 0.15s, box-shadow 0.15s, border-left-color 0.2s !important;
 }
 .project-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateX(2px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+  border-left-color: var(--ember) !important;
 }
 .card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.5rem; margin-bottom: 0.5rem;
 }
 .card-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  flex: 1;
-  text-decoration: none;
+  font-size: 1rem; font-weight: 600; color: var(--ink);
+  flex: 1; text-decoration: none;
 }
-.card-title:hover {
-  color: var(--el-color-primary);
-}
-.card-tags {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
+.card-title:hover { color: var(--ember); }
+.card-tags { display: flex; gap: 0.25rem; flex-shrink: 0; }
 .card-desc {
-  font-size: 0.85rem;
-  color: var(--lab-muted);
-  margin: 0 0 0.75rem;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 0.84rem; color: var(--stone); margin: 0 0 0.65rem;
+  line-height: 1.5; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.card-desc--empty {
-  font-style: italic;
-  color: var(--lab-muted);
-}
+.card-desc--empty { font-style: italic; }
 .card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--lab-muted);
-  margin-bottom: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+  font-size: 0.78rem; color: var(--stone); margin-bottom: 0.65rem;
 }
-.meta-item {
-  display: flex;
-  gap: 0.5rem;
-  align-items: baseline;
-}
-.meta-label {
-  flex-shrink: 0;
-  width: 56px;
-  color: var(--lab-muted);
-}
-.meta-value {
-  color: var(--el-text-color-regular);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.meta-links {
-  display: flex;
-  gap: 0.75rem;
-}
+.meta-item { display: flex; gap: 0.5rem; align-items: baseline; }
+.meta-label { flex-shrink: 0; width: 56px; color: var(--stone); }
+.meta-value { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta-links { display: flex; gap: 0.75rem; }
 .meta-links a {
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  color: var(--el-color-primary);
-  text-decoration: none;
-  font-size: 0.8rem;
+  display: flex; align-items: center; gap: 0.2rem;
+  color: var(--ember); text-decoration: none; font-size: 0.78rem;
 }
-.meta-links a:hover {
-  text-decoration: underline;
-}
+.meta-links a:hover { text-decoration: underline; }
 .card-footer {
-  display: flex;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex; gap: 0.5rem; padding-top: 0.5rem;
+  border-top: 1px solid var(--el-border-color-extra-light);
 }
 </style>

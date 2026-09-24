@@ -36,7 +36,7 @@ def upgrade() -> None:
     op.create_index("ix_alumni_posts_created_at", "alumni_posts", ["created_at"])
 
     # 2. Add is_public to projects
-    op.add_column("projects", sa.Column("is_public", sa.Boolean(), nullable=False, server_default="true"))
+    op.add_column("projects", sa.Column("is_public", sa.Boolean(), nullable=False, server_default=sa.text("1")))
 
     # 3. Project viewers table
     op.create_table(

@@ -5,12 +5,17 @@ import { useAuthStore } from '@/stores/auth'
 import { notificationsApi, type NotificationOut } from '@/api/notifications'
 import { notesApi, type NoteOut } from '@/api/notes'
 import { ElMessage } from 'element-plus'
-import { Bell, Search, Medal, Document, ArrowRight } from '@element-plus/icons-vue'
+import { Bell, Search, Document, ArrowRight, HomeFilled, FolderOpened, Reading, PictureFilled, BellFilled, Medal, User, Grid, TrendCharts, Checked, Key } from '@element-plus/icons-vue'
+import EmberLogo from '@/components/EmberLogo.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const sidebarCollapsed = ref(false)
+
+const iconMap: Record<string, any> = {
+  HomeFilled, FolderOpened, Reading, PictureFilled, BellFilled, Medal, User, Grid, TrendCharts, Checked, Key,
+}
 
 // ── Search ──────────────────────────────
 const searchQuery = ref('')
@@ -43,7 +48,7 @@ function goToResult(note: NoteOut) {
   router.push(`/projects/${note.project_id}/notes/${note.id}`)
 }
 
-// Notifications
+// ── Notifications ────────────────────────
 const unreadCount = ref(0)
 const notifList = ref<NotificationOut[]>([])
 const notifVisible = ref(false)
@@ -52,9 +57,8 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 
 function loadTypeLabel(type: string): string {
   const map: Record<string, string> = {
-    ask_opened: '追问',
-    comment: '评论',
-    system: '系统',
+    ask_opened: '追问', comment: '评论', system: '系统',
+    announcement: '公告', role_changed: '角色变更', status_changed: '状态变更',
   }
   return map[type] || type
 }
@@ -63,7 +67,7 @@ function loadPayloadSnippet(n: NotificationOut): string {
   try {
     if (n.payload_json) {
       const p = JSON.parse(n.payload_json)
-      return p.content || p.note_title || ''
+      return p.content || p.note_title || p.title || ''
     }
   } catch {}
   return ''
@@ -119,12 +123,8 @@ function toggleNotif() {
   if (notifVisible.value) loadNotifications()
 }
 
-interface NavItem {
-  path: string
-  title: string
-  icon: string
-  roles?: string[]
-}
+// ── Navigation ───────────────────────────
+interface NavItem { path: string; title: string; icon: string; roles?: string[] }
 
 const navItems = computed<NavItem[]>(() => {
   const items: NavItem[] = [
@@ -135,7 +135,6 @@ const navItems = computed<NavItem[]>(() => {
     { path: '/announcements', title: '公告中心', icon: 'BellFilled' },
     { path: '/alumni', title: '毕业人员专区', icon: 'Medal' },
   ]
-  // 成员列表和分类管理：只有导师能看到
   if (auth.isOwner) {
     items.push(
       { path: '/members', title: '成员列表', icon: 'User' },
@@ -148,55 +147,50 @@ const navItems = computed<NavItem[]>(() => {
   return items
 })
 
-function handleLogout() {
-  auth.logout()
-}
-
-function isActive(path: string) {
-  return route.path === path || route.path.startsWith(path + '/')
-}
+function handleLogout() { auth.logout() }
+function isActive(path: string) { return route.path === path || route.path.startsWith(path + '/') }
 
 onMounted(() => {
   fetchUnreadCount()
   pollTimer = setInterval(fetchUnreadCount, 30000)
 })
-
-onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer)
-})
+onUnmounted(() => { if (pollTimer) clearInterval(pollTimer) })
 </script>
 
 <template>
   <el-container class="app-shell">
-    <el-aside :width="sidebarCollapsed ? '64px' : '220px'" class="sidebar" :class="{ 'is-collapsed': sidebarCollapsed }">
-      <div class="sidebar-brand">
-        <router-link to="/home" class="brand-text">{{ sidebarCollapsed ? 'L' : 'LabInherit' }}</router-link>
-        <span class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed">{{ sidebarCollapsed ? '▶' : '◀' }}</span>
+    <el-aside :width="sidebarCollapsed ? '64px' : '224px'" class="sidebar" :class="{ 'is-collapsed': sidebarCollapsed }">
+      <div class="sidebar-brand" @click="sidebarCollapsed = !sidebarCollapsed">
+        <div class="brand-inner">
+          <EmberLogo :collapsed="sidebarCollapsed" />
+          <span v-if="!sidebarCollapsed" class="brand-text">薪火相传</span>
+        </div>
       </div>
 
-      <el-menu
-        :default-active="route ? route.path : ''"
-        :router="true"
-        :collapse="sidebarCollapsed"
-        background-color="transparent"
-        class="nav-menu"
-      >
-        <el-menu-item
+      <nav class="sidebar-nav">
+        <router-link
           v-for="item in navItems"
           :key="item.path"
-          :index="item.path"
+          :to="item.path"
+          class="nav-link"
+          :class="{ 'is-active': isActive(item.path) }"
+          :title="sidebarCollapsed ? item.title : undefined"
         >
-          <el-icon><component :is="item.icon" /></el-icon>
-          <template #title>{{ item.title }}</template>
-        </el-menu-item>
-      </el-menu>
+          <el-icon class="nav-icon"><component :is="iconMap[item.icon]" /></el-icon>
+          <span v-if="!sidebarCollapsed" class="nav-label">{{ item.title }}</span>
+        </router-link>
+      </nav>
 
       <div class="sidebar-footer">
         <router-link v-if="!sidebarCollapsed" to="/profile" class="user-info">
+          <span class="user-avatar">{{ auth.user?.display_name?.charAt(0) || '?' }}</span>
           <span class="user-name">{{ auth.user?.display_name }}</span>
-          <el-tag size="small" :type="auth.isOwner ? 'warning' : 'info'">
-            {{ auth.user?.role === 'owner' ? '导师' : auth.user?.profile?.gender === '女' ? '师姐' : auth.user?.profile?.gender === '男' ? '师兄' : '成员' }}
+          <el-tag size="small" :type="auth.isOwner ? 'warning' : 'info'" class="user-role-tag">
+            {{ auth.isOwner ? '导师' : '成员' }}
           </el-tag>
+        </router-link>
+        <router-link v-else to="/profile" class="user-info user-info--compact" :title="auth.user?.display_name">
+          <span class="user-avatar">{{ auth.user?.display_name?.charAt(0) || '?' }}</span>
         </router-link>
       </div>
     </el-aside>
@@ -204,53 +198,37 @@ onUnmounted(() => {
     <el-container>
       <el-header class="topbar">
         <div class="topbar-left">
-          <h2>{{ (route.meta?.title as string) || 'LabInherit' }}</h2>
+          <h2 class="page-title">{{ (route.meta?.title as string) || 'LabInherit' }}</h2>
         </div>
         <div class="topbar-center">
           <el-popover
             :visible="searchVisible"
-            placement="bottom-start"
-            :width="400"
-            trigger="manual"
-            :hide-after="0"
-            :show-arrow="false"
+            placement="bottom-start" :width="420" trigger="manual"
+            :hide-after="0" :show-arrow="false"
           >
             <div class="search-dropdown" v-loading="searchLoading">
               <div v-if="searchResults.length === 0 && !searchLoading" class="search-empty">
                 <el-icon><Search /></el-icon>
                 <span>{{ searchQuery ? '未找到相关笔记' : '输入关键词搜索笔记' }}</span>
               </div>
-              <div
-                v-for="n in searchResults"
-                :key="n.id"
-                class="search-item"
-                @click="goToResult(n)"
-              >
-                <div class="search-item-icon">
-                  <el-icon><Document /></el-icon>
-                </div>
+              <div v-for="n in searchResults" :key="n.id" class="search-item" @click="goToResult(n)">
+                <div class="search-item-icon"><el-icon><Document /></el-icon></div>
                 <div class="search-item-content">
                   <div class="search-item-title">{{ n.title }}</div>
                   <div class="search-item-meta">
-                    <el-tag size="small" effect="plain" class="project-tag">{{ n.project_title || '通用' }}</el-tag>
-                    <span class="meta-sep">·</span>
-                    <span class="author-name">{{ n.author_display_name }}</span>
+                    <el-tag size="small" effect="plain">{{ n.project_title || '通用' }}</el-tag>
+                    <span class="meta-sep">&middot;</span>
+                    <span>{{ n.author_display_name }}</span>
                   </div>
                 </div>
-                <div class="search-item-arrow">
-                  <el-icon><ArrowRight /></el-icon>
-                </div>
+                <div class="search-item-arrow"><el-icon><ArrowRight /></el-icon></div>
               </div>
             </div>
             <template #reference>
               <el-input
-                v-model="searchQuery"
-                placeholder="搜索笔记..."
-                :prefix-icon="Search"
-                clearable
-                size="default"
-                @input="handleSearchInput"
-                @clear="searchVisible = false"
+                v-model="searchQuery" placeholder="搜索笔记..."
+                :prefix-icon="Search" clearable size="default"
+                @input="handleSearchInput" @clear="searchVisible = false"
                 @focus="searchQuery && searchResults.length > 0 && (searchVisible = true)"
                 @blur="setTimeout(() => searchVisible = false, 200)"
                 class="search-input"
@@ -260,20 +238,16 @@ onUnmounted(() => {
         </div>
         <div class="topbar-right">
           <el-popover
-            :visible="notifVisible"
-            placement="bottom-end"
-            :width="380"
-            trigger="click"
-            @show="loadNotifications"
+            :visible="notifVisible" placement="bottom-end" :width="380"
+            trigger="click" @show="loadNotifications"
           >
             <template #reference>
               <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notif-badge">
-                <el-button text @click="toggleNotif">
-                  <el-icon :size="20"><Bell /></el-icon>
+                <el-button text @click="toggleNotif" class="notif-btn">
+                  <el-icon :size="19"><Bell /></el-icon>
                 </el-button>
               </el-badge>
             </template>
-
             <div class="notif-popover" v-loading="notifLoading">
               <div class="notif-header">
                 <span class="notif-header-title">消息通知</span>
@@ -281,10 +255,8 @@ onUnmounted(() => {
               </div>
               <div v-if="notifList.length === 0" class="notif-empty">暂无通知</div>
               <div
-                v-for="n in notifList"
-                :key="n.id"
-                class="notif-item"
-                :class="{ 'is-unread': !n.read_at }"
+                v-for="n in notifList" :key="n.id"
+                class="notif-item" :class="{ 'is-unread': !n.read_at }"
                 @click="handleNotifClick(n)"
               >
                 <div class="notif-item-header">
@@ -298,7 +270,7 @@ onUnmounted(() => {
               </div>
             </div>
           </el-popover>
-          <el-button text @click="handleLogout">退出登录</el-button>
+          <el-button text class="logout-btn" @click="handleLogout">退出</el-button>
         </div>
       </el-header>
 
@@ -310,272 +282,185 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.app-shell {
-  height: 100vh;
-}
+/* ── Shell ──────────────────────────────── */
+.app-shell { height: 100vh; }
 
+/* ── Sidebar ────────────────────────────── */
 .sidebar {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  transition: width 0.25s ease;
-}
-.sidebar.is-collapsed {
-  overflow-x: hidden;
-}
-.sidebar.is-collapsed .el-menu-item {
-  justify-content: center;
-  padding: 0 !important;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex; flex-direction: column;
+  overflow-y: auto; overflow-x: hidden;
+  transition: width 0.22s ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-brand {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1.25rem 1.25rem 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.brand-text {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #409eff;
-  text-decoration: none;
-  letter-spacing: -0.5px;
-}
-
-.sidebar-toggle {
-  cursor: pointer; font-size: 0.7rem; color: rgba(255,255,255,0.35);
-  padding: 2px 4px; transition: color 0.15s;
-}
-.sidebar-toggle:hover { color: rgba(255,255,255,0.7); }
-
-.nav-menu {
-  border-right: none;
-  flex: 1;
-}
-
-.nav-menu .el-menu-item {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.nav-menu .el-menu-item:hover,
-.nav-menu .el-menu-item.is-active {
-  color: #409eff;
-  background-color: rgba(64, 158, 255, 0.08);
-}
-
-.sidebar-footer {
-  padding: 0.75rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  border-radius: 6px;
-  padding: 4px 6px;
-  transition: background 0.15s;
-}
-.user-info:hover { background: rgba(255,255,255,0.08); }
-
-.user-name {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.85rem;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border-bottom: 1px solid #e8eaed;
-  padding: 0 1.5rem;
-}
-
-.topbar-left h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-.topbar-center {
-  flex: 1; max-width: 360px; margin: 0 1.5rem;
-}
-.topbar-center .search-input {
-  width: 100%;
-}
-
-/* ── Search dropdown ──────────────── */
-.search-dropdown {
-  max-height: 380px;
-  overflow-y: auto;
-  border-radius: 8px;
-}
-
-.search-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem 1rem;
-  color: var(--lab-muted);
-  font-size: 0.85rem;
-}
-
-.search-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0.75rem;
-  border-radius: 6px;
+  padding: 1.25rem 1rem 1rem;
   cursor: pointer;
-  transition: background 0.15s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.brand-inner {
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.brand-text {
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--ember);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* ── Navigation ──────────────────────────── */
+.sidebar-nav {
+  flex: 1; padding: 0.6rem 0.5rem;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nav-link {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-link:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.04);
+}
+.nav-link.is-active {
+  color: var(--ember-glow);
+  background: rgba(194, 81, 26, 0.12);
+  font-weight: 500;
+}
+.nav-icon { font-size: 1.15rem; flex-shrink: 0; }
+.nav-label { white-space: nowrap; }
+
+.sidebar.is-collapsed .nav-link {
+  justify-content: center; padding: 0.6rem 0;
+}
+.sidebar.is-collapsed .sidebar-brand { padding: 1rem 0.5rem; }
+.sidebar.is-collapsed .brand-inner { justify-content: center; }
+
+/* ── Sidebar footer ─────────────────────── */
+.sidebar-footer {
+  padding: 0.7rem 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.user-info {
+  display: flex; align-items: center; gap: 0.5rem;
+  text-decoration: none; border-radius: 6px;
+  padding: 0.4rem 0.5rem; transition: background 0.15s;
+}
+.user-info:hover { background: rgba(255, 255, 255, 0.06); }
+.user-info--compact { justify-content: center; }
+
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ember); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 600; flex-shrink: 0;
+}
+.user-name {
+  color: rgba(255, 255, 255, 0.75); font-size: 0.82rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-role-tag { flex-shrink: 0; }
+
+/* ── Topbar ─────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: transparent;
+  padding: 1.25rem 1.5rem 0.75rem; height: auto;
+}
+.page-title {
+  margin: 0; font-size: 1.15rem; font-weight: 700;
+  color: var(--ink);
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--ember);
+  line-height: 1.3;
+}
+.topbar-center { flex: 1; max-width: 380px; margin: 0 1.5rem; }
+.topbar-center .search-input { width: 100%; }
+.topbar-right { display: flex; align-items: center; gap: 0.25rem; }
+
+.notif-btn { color: var(--stone); }
+.notif-btn:hover { color: var(--ember); }
+.logout-btn { color: var(--stone); font-size: 0.82rem; }
+
+/* ── Search dropdown ───────────────────── */
+.search-dropdown {
+  max-height: 380px; overflow-y: auto; border-radius: 8px;
+}
+.search-empty {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; padding: 2rem 1rem;
+  color: var(--lab-muted); font-size: 0.85rem;
+}
+.search-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 0.75rem; border-radius: 6px;
+  cursor: pointer; transition: background 0.15s;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.search-item:last-child {
-  border-bottom: none;
-}
-.search-item:hover {
-  background: var(--el-fill-color-light);
-}
+.search-item:last-child { border-bottom: none; }
+.search-item:hover { background: var(--glow); }
 .search-item:hover .search-item-arrow {
-  opacity: 1;
-  transform: translateX(2px);
+  opacity: 1; transform: translateX(2px);
 }
-
 .search-item-icon {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--el-color-primary-light-9);
-  border-radius: 6px;
-  color: var(--el-color-primary);
+  flex-shrink: 0; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--glow); border-radius: 6px; color: var(--ember);
 }
-
-.search-item-content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
+.search-item-content { flex: 1; min-width: 0; overflow: hidden; }
 .search-item-title {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.9rem; font-weight: 500; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   margin-bottom: 0.2rem;
 }
-
 .search-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.76rem;
-  color: var(--lab-muted);
+  display: flex; align-items: center; gap: 0.35rem;
+  font-size: 0.76rem; color: var(--lab-muted);
 }
-
-.project-tag {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.meta-sep {
-  color: var(--el-border-color);
-}
-
-.author-name {
-  color: var(--el-text-color-secondary);
-}
-
+.meta-sep { color: var(--el-border-color); }
 .search-item-arrow {
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.15s, transform 0.15s;
-  color: var(--el-color-primary);
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.notif-badge {
-  margin-right: 0.5rem;
-}
-
-.main-content {
-  background: var(--lab-bg);
-  padding: 1.5rem;
-  overflow-y: auto;
+  flex-shrink: 0; opacity: 0;
+  transition: opacity 0.15s, transform 0.15s; color: var(--ember);
 }
 
 /* ── Notification popover ──────────────── */
-.notif-popover {
-  max-height: 400px;
-  overflow-y: auto;
-}
+.notif-popover { max-height: 400px; overflow-y: auto; }
 .notif-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.5rem; padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.notif-header-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-.notif-empty {
-  text-align: center;
-  color: var(--lab-muted);
-  padding: 1.5rem;
-  font-size: 0.88rem;
-}
+.notif-header-title { font-weight: 600; font-size: 0.95rem; }
+.notif-empty { text-align: center; color: var(--lab-muted); padding: 1.5rem; font-size: 0.88rem; }
 .notif-item {
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  cursor: pointer;
-  transition: background 0.15s;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--el-border-color-lighter);
+  cursor: pointer; transition: background 0.15s;
 }
-.notif-item:hover {
-  background: var(--el-fill-color-light);
-}
-.notif-item.is-unread {
-  background: #f0f5ff;
-}
+.notif-item:hover { background: var(--glow); }
+.notif-item.is-unread { background: var(--glow); }
 .notif-item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 0.2rem;
 }
 .notif-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--el-color-danger);
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ember);
 }
 .notif-item-text {
-  font-size: 0.84rem;
-  color: var(--el-text-color-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.84rem; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.notif-item-time {
-  font-size: 0.72rem;
-  color: var(--lab-muted);
-  margin-top: 0.15rem;
+.notif-item-time { font-size: 0.72rem; color: var(--lab-muted); margin-top: 0.15rem; }
+
+/* ── Main content ──────────────────────── */
+.main-content {
+  background: var(--parchment);
+  padding: 1.5rem; overflow-y: auto;
 }
 </style>

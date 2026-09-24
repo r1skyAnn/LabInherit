@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, UploadFile
-from fastapi.exceptions import HTTPException
+from app.core.exceptions import ValidationError
 
 from app.core.config import settings
 from app.core.deps import get_current_user
@@ -27,11 +27,11 @@ async def upload_image(
     _: Annotated[User, Depends(get_current_user)] = None,
 ) -> dict:
     if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(400, "仅支持 PNG / JPEG / GIF / WebP / PDF 格式")
+        raise ValidationError("仅支持 PNG / JPEG / GIF / WebP / PDF 格式")
 
     contents = await file.read()
     if len(contents) > MAX_SIZE:
-        raise HTTPException(400, "文件不能超过 20 MB")
+        raise ValidationError("文件不能超过 20 MB")
 
     suffix = Path(file.filename or "file").suffix.lstrip(".") or "bin"
     name = f"{uuid.uuid4().hex}.{suffix}"

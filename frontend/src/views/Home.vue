@@ -5,6 +5,7 @@ import { projectsApi } from '@/api/projects'
 import { notesApi } from '@/api/notes'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import EmberLogo from '@/components/EmberLogo.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -12,6 +13,7 @@ const announcements = ref<AnnouncementOut[]>([])
 const annLoading = ref(true)
 const projectCount = ref(0)
 const noteCount = ref(0)
+const memberCount = ref(0)
 const greeting = ref('')
 
 function getGreeting() {
@@ -28,20 +30,21 @@ async function load() {
   annLoading.value = true
   try {
     const [anns, projs, notes] = await Promise.all([
-      announcementsApi.list({ page: 1, page_size: 5 }),
+      announcementsApi.list({ page: 1, page_size: 4 }),
       projectsApi.list({ page_size: 1 }),
       notesApi.list({ page_size: 1 }),
     ])
     announcements.value = anns.data.items
     projectCount.value = projs.data.total
     noteCount.value = notes.data.total
+    memberCount.value = 0 // fetched by admin only
   } finally {
     annLoading.value = false
   }
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 }
 
 onMounted(load)
@@ -49,77 +52,79 @@ onMounted(load)
 
 <template>
   <div class="home">
-    <!-- Hero -->
-    <section class="hero">
-      <div class="hero-content">
-        <p class="greeting">{{ greeting }}{{ auth.user?.display_name ? '，' + auth.user.display_name : '' }}</p>
-        <h1 class="hero-title">LabInherit</h1>
-        <p class="hero-sub">实验室薪火传舵平台 · 让每一代经验都有迹可循</p>
-      </div>
-    </section>
-
-    <!-- Stats -->
-    <section class="stats-row">
-      <div class="stat-card" @click="router.push('/projects')">
-        <div class="stat-icon">📂</div>
-        <div class="stat-num">{{ projectCount }}</div>
-        <div class="stat-label">课题项目</div>
-      </div>
-      <div class="stat-card" @click="router.push('/projects')">
-        <div class="stat-icon">📝</div>
-        <div class="stat-num">{{ noteCount }}</div>
-        <div class="stat-label">沉淀笔记</div>
-      </div>
-    </section>
-
-    <!-- Main content -->
-    <div class="home-grid">
-      <!-- Announcements -->
-      <section class="ann-section">
-        <div class="section-header">
-          <h3>📢 最新公告</h3>
-          <el-button text size="small" @click="router.push('/announcements')">查看全部</el-button>
+    <!-- Hero — scholar's greeting -->
+    <section class="home-hero">
+      <div class="hero-brand">
+        <EmberLogo />
+        <div class="hero-text">
+          <p class="greeting">{{ greeting }}{{ auth.user?.display_name ? '，' + auth.user.display_name : '' }}</p>
+          <p class="hero-desc">实验室薪火传舵平台 — 让每一代的经验都有迹可循</p>
         </div>
-        <div class="ann-list" v-loading="annLoading">
-          <el-empty v-if="announcements.length === 0" description="暂无公告" :image-size="50" />
-          <div v-for="ann in announcements" :key="ann.id" class="ann-item" @click="router.push('/announcements')">
-            <div class="ann-left">
-              <span v-if="ann.is_pinned" class="pin-icon">📌</span>
+      </div>
+    </section>
+
+    <!-- Stats — three numbers that tell the lab's story -->
+    <section class="home-stats">
+      <div class="stat-item" @click="router.push('/projects')">
+        <span class="stat-num">{{ projectCount }}</span>
+        <span class="stat-label">课题项目</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item" @click="router.push('/projects')">
+        <span class="stat-num">{{ noteCount }}</span>
+        <span class="stat-label">沉淀笔记</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item" @click="router.push('/members')">
+        <span class="stat-num">—</span>
+        <span class="stat-label">传承成员</span>
+      </div>
+    </section>
+
+    <!-- Content grid -->
+    <div class="home-grid">
+      <!-- Announcements — left bar cards -->
+      <section class="home-announcements">
+        <div class="lab-section-header">
+          <h3>最新公告</h3>
+          <el-button text size="small" @click="router.push('/announcements')">查看全部 &rarr;</el-button>
+        </div>
+        <div v-loading="annLoading" class="ann-list">
+          <el-empty v-if="announcements.length === 0" description="暂无公告" :image-size="48" />
+          <div
+            v-for="ann in announcements" :key="ann.id"
+            class="ann-item lab-card lab-card--accent"
+            @click="router.push('/announcements')"
+          >
+            <div class="ann-main">
+              <span v-if="ann.is_pinned" class="ann-pin">置顶</span>
               <span class="ann-title">{{ ann.title }}</span>
             </div>
-            <div class="ann-right">
-              <span class="ann-author">{{ ann.author_display_name }}</span>
-              <span class="ann-time">{{ formatDate(ann.created_at) }}</span>
+            <div class="ann-meta">
+              <span>{{ ann.author_display_name }}</span>
+              <span>{{ formatDate(ann.created_at) }}</span>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Quick links -->
-      <section class="quick-section">
-        <div class="section-header">
+      <section class="home-quick">
+        <div class="lab-section-header">
           <h3>快捷入口</h3>
         </div>
-        <div class="quick-cards">
-          <div class="quick-card" @click="router.push('/projects')">
-            <span class="qc-icon">🔬</span>
-            <span class="qc-title">课题项目</span>
-            <span class="qc-desc">浏览和创建研究课题</span>
+        <div class="quick-list">
+          <div class="quick-item lab-card" @click="router.push('/showcase')">
+            <span class="qi-icon">🏆</span>
+            <span class="qi-label">成果展示墙</span>
           </div>
-          <div class="quick-card" @click="router.push('/showcase')">
-            <span class="qc-icon">🏆</span>
-            <span class="qc-title">成果展示墙</span>
-            <span class="qc-desc">论文专利与师兄寄语</span>
+          <div class="quick-item lab-card" @click="router.push('/guides')">
+            <span class="qi-icon">📖</span>
+            <span class="qi-label">新人指南</span>
           </div>
-          <div class="quick-card" @click="router.push('/announcements')">
-            <span class="qc-icon">📢</span>
-            <span class="qc-title">公告中心</span>
-            <span class="qc-desc">实验室最新通知</span>
-          </div>
-          <div class="quick-card" v-if="!auth.user || auth.user.status !== 'graduated'" @click="router.push('/members')">
-            <span class="qc-icon">👥</span>
-            <span class="qc-title">成员列表</span>
-            <span class="qc-desc">查看实验室成员</span>
+          <div class="quick-item lab-card" @click="router.push('/alumni')">
+            <span class="qi-icon">🎓</span>
+            <span class="qi-label">毕业专区</span>
           </div>
         </div>
       </section>
@@ -128,90 +133,97 @@ onMounted(load)
 </template>
 
 <style scoped>
-.home { max-width: 960px; margin: 0 auto; }
+.home { max-width: 900px; margin: 0 auto; }
 
-/* Hero */
-.hero {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--el-border-color-lighter);
+/* ── Hero ────────────────────────────────── */
+.home-hero {
+  margin-bottom: 1.75rem;
 }
-.greeting { margin: 0 0 0.25rem; font-size: 0.9rem; color: var(--lab-muted); }
-.hero-title { margin: 0 0 0.5rem; font-size: 2rem; font-weight: 700; color: #1a1a2e; }
-.hero-sub { margin: 0; font-size: 0.9rem; color: var(--lab-muted); }
+.hero-brand {
+  display: flex; align-items: center; gap: 1.25rem;
+}
+.hero-brand :deep(.ember-logo) {
+  width: 56px; height: 56px;
+}
+.hero-text { flex: 1; }
+.greeting {
+  margin: 0 0 0.15rem; font-size: 1.05rem; font-weight: 600;
+  color: var(--ink);
+}
+.hero-desc {
+  margin: 0; font-size: 0.82rem; color: var(--stone);
+}
 
-/* Stats */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+/* ── Stats ───────────────────────────────── */
+.home-stats {
+  display: flex; align-items: center;
+  background: #fefdf9;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-light);
+  margin-bottom: 1.75rem;
 }
-.stat-card {
-  background: var(--el-bg-color);
-  border-radius: 12px;
-  padding: 1.25rem;
-  text-align: center;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-  border: 1px solid var(--el-border-color-lighter);
+.stat-item {
+  flex: 1; text-align: center; padding: 1.1rem 0.75rem;
+  display: flex; flex-direction: column; gap: 0.15rem;
+  cursor: pointer; transition: background 0.15s;
 }
-.stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.stat-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
-.stat-num { font-size: 1.8rem; font-weight: 700; color: var(--el-color-primary); }
-.stat-label { font-size: 0.8rem; color: var(--lab-muted); margin-top: 0.1rem; }
+.stat-item:hover { background: var(--glow); }
+.stat-item:first-child { border-radius: 6px 0 0 6px; }
+.stat-item:last-child { border-radius: 0 6px 6px 0; }
+.stat-num {
+  font-size: 1.5rem; font-weight: 700; color: var(--ember);
+  letter-spacing: -0.02em;
+}
+.stat-label { font-size: 0.76rem; color: var(--stone); }
+.stat-divider {
+  width: 1px; height: 32px; background: var(--el-border-color-extra-light);
+  flex-shrink: 0;
+}
 
-/* Grid */
+/* ── Grid ────────────────────────────────── */
 .home-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 260px;
+  gap: 1.5rem;
 }
 
-.section-header {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;
-}
-.section-header h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }
-
-/* Announcements */
+/* ── Announcements ───────────────────────── */
 .ann-list {
-  background: var(--el-bg-color);
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-lighter);
-  padding: 0 1rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
   min-height: 120px;
 }
 .ann-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0.75rem 0; border-bottom: 1px solid var(--el-border-color-lighter);
-  cursor: pointer; transition: color 0.15s;
-}
-.ann-item:last-child { border-bottom: none; }
-.ann-item:hover .ann-title { color: var(--el-color-primary); }
-.ann-left { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
-.ann-title { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pin-icon { flex-shrink: 0; font-size: 0.8rem; }
-.ann-right { display: flex; gap: 0.75rem; flex-shrink: 0; margin-left: 0.5rem; }
-.ann-author { font-size: 0.78rem; color: var(--lab-muted); }
-.ann-time { font-size: 0.76rem; color: var(--lab-muted); }
-
-/* Quick links */
-.quick-cards {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
-}
-.quick-card {
-  background: var(--el-bg-color);
-  border-radius: 10px;
-  border: 1px solid var(--el-border-color-lighter);
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  display: flex; flex-direction: column; gap: 0.25rem;
 }
-.quick-card:hover { border-color: var(--el-color-primary-light-3); box-shadow: 0 2px 10px rgba(64,158,255,0.08); }
-.qc-icon { font-size: 1.3rem; }
-.qc-title { font-size: 0.88rem; font-weight: 600; }
-.qc-desc { font-size: 0.74rem; color: var(--lab-muted); }
+.ann-main {
+  display: flex; align-items: center; gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+.ann-pin {
+  font-size: 0.65rem; padding: 1px 6px;
+  background: var(--glow); color: var(--ember);
+  border-radius: 3px; flex-shrink: 0;
+  font-weight: 600;
+}
+.ann-title {
+  font-size: 0.88rem; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.ann-meta {
+  display: flex; gap: 0.6rem; font-size: 0.73rem; color: var(--stone);
+  padding-left: 0.5rem;
+}
+
+/* ── Quick links ─────────────────────────── */
+.quick-list {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.quick-item {
+  padding: 0.85rem 1rem;
+  display: flex; align-items: center; gap: 0.6rem;
+  cursor: pointer;
+}
+.qi-icon { font-size: 1.1rem; flex-shrink: 0; }
+.qi-label { font-size: 0.85rem; font-weight: 500; }
 </style>

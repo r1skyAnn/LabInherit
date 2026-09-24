@@ -1,0 +1,38 @@
+[Unit]
+Description=LabInherit Backend API Service
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/project/LabInherit/backend
+Environment="PATH=/home/project/LabInherit/backend/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/home/project/LabInherit/backend/.env
+
+# 生产环境使用 gunicorn + uvicorn workers
+ExecStart=/home/project/LabInherit/backend/.venv/bin/uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --workers 4 \
+    --log-level info
+
+# 或者使用 gunicorn（更稳定）
+# ExecStart=/home/project/LabInherit/backend/.venv/bin/gunicorn app.main:app \
+#     --bind 0.0.0.0:8000 \
+#     --workers 4 \
+#     --worker-class uvicorn.workers.UvicornWorker \
+#     --access-logfile /var/log/labinherit/access.log \
+#     --error-logfile /var/log/labinherit/error.log
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# 资源限制
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

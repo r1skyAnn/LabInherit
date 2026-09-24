@@ -20,23 +20,6 @@ from app.modules.comments.schemas import (
 router = APIRouter(prefix="/comments", tags=["comments"])
 
 
-def _build_out(comment) -> CommentOut:
-    return CommentOut(
-        id=comment.id,
-        target_type=comment.target_type,
-        target_id=comment.target_id,
-        parent_id=comment.parent_id,
-        author_id=comment.author_id,
-        content=comment.content,
-        is_ask=comment.is_ask,
-        status=comment.status,
-        created_at=comment.created_at,
-        updated_at=comment.updated_at,
-        author_name=comment.author.display_name if comment.author else "",
-        author_email=comment.author.email if comment.author else "",
-    )
-
-
 @router.get("/notes/{note_id}", response_model=CommentListResponse, summary="获取笔记评论列表")
 async def list_note_comments(
     note_id: int,
@@ -47,7 +30,7 @@ async def list_note_comments(
     items, total = await service.list_comments(
         db, target_type="note", target_id=note_id, page=page, page_size=page_size,
     )
-    return CommentListResponse(items=[_build_out(c) for c in items], total=total)
+    return CommentListResponse(items=[CommentOut.model_validate(c) for c in items], total=total)
 
 
 @router.post("/notes/{note_id}", response_model=CommentOut, summary="添加评论/追问")
@@ -63,7 +46,7 @@ async def create_note_comment(
     )
     # Fire side effects: notification + email for the note author
     _ = await _fire_comment_side_effects(db, comment, user)
-    return _build_out(comment)
+    return CommentOut.model_validate(comment)
 
 
 @router.get("/projects/{project_id}", response_model=CommentListResponse, summary="获取项目下所有追问")
@@ -76,7 +59,7 @@ async def list_project_asks(
     items, total = await service.list_asks_for_project(
         db, project_id=project_id, page=page, page_size=page_size,
     )
-    return CommentListResponse(items=[_build_out(c) for c in items], total=total)
+    return CommentListResponse(items=[CommentOut.model_validate(c) for c in items], total=total)
 
 
 @router.patch("/{comment_id}", response_model=CommentOut, summary="编辑评论/改状态/升级追问")
@@ -93,7 +76,7 @@ async def update_comment(
     # If this was an upgrade to ask, fire email notification
     if data.get("is_ask"):
         _ = await _fire_ask_upgrade_side_effects(db, comment, user)
-    return _build_out(comment)
+    return CommentOut.model_validate(comment)
 
 
 @router.delete("/{comment_id}", summary="删除评论")

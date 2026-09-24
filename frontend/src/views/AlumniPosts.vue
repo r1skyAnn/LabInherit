@@ -14,6 +14,8 @@ const showForm = ref(false)
 const editingPost = ref<AlumniPostOut | null>(null)
 const showDetail = ref(false)
 const currentPost = ref<AlumniPostOut | null>(null)
+const page = ref(1)
+const pageSize = ref(10)
 
 const canPost = computed(() => {
   // 任何登录用户都可以发布（实习生可能找到工作机会）
@@ -43,8 +45,8 @@ async function load() {
   try {
     const resp = await alumniPostsApi.list({
       type: filterType.value || undefined,
-      page: 1,
-      page_size: 100,
+      page: page.value,
+      page_size: pageSize.value,
     })
     posts.value = resp.data.items
     total.value = resp.data.total
@@ -98,7 +100,7 @@ onMounted(load)
     <div class="page-header">
       <h2>毕业人员专区</h2>
       <div class="header-actions">
-        <el-select v-model="filterType" @change="load" clearable style="width:140px">
+        <el-select v-model="filterType" @change="page=1;load()" clearable style="width:140px">
           <el-option v-for="opt in typeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
         </el-select>
         <el-button v-if="canPost" type="primary" @click="openCreate">+ 发布帖子</el-button>
@@ -147,7 +149,18 @@ onMounted(load)
       </div>
     </div>
 
-    <div class="summary">共 {{ total }} 条帖子</div>
+    <div class="summary">
+      共 {{ total }} 条帖子
+      <el-pagination
+        v-if="total > pageSize"
+        v-model:current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next"
+        @current-change="load"
+        style="margin-top:1rem; justify-content:center"
+      />
+    </div>
 
     <!-- Create/Edit Form Dialog -->
     <el-dialog v-model="showForm" :title="editingPost ? '编辑帖子' : '发布帖子'" width="560px">
@@ -188,7 +201,10 @@ onMounted(load)
   justify-content: space-between;
   margin-bottom: 1rem;
 }
-.page-header h2 { margin: 0; }
+.page-header h2 {
+  margin: 0; font-size: 1.15rem; font-weight: 700;
+  padding-left: 0.65rem; border-left: 3px solid var(--ember);
+}
 .header-actions {
   display: flex;
   gap: 0.75rem;
@@ -205,61 +221,36 @@ onMounted(load)
   gap: 1rem;
 }
 .post-card {
-  background: #fff;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: box-shadow 0.15s, transform 0.15s;
+  background: #fefdf9; border: 1px solid var(--el-border-color-light);
+  border-radius: 6px; padding: 1rem 1.1rem; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: transform 0.15s, box-shadow 0.15s, border-left-color 0.2s;
 }
 .post-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  transform: translateX(2px); border-left-color: var(--ember);
 }
 .post-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.45rem;
 }
-.post-date {
-  font-size: 0.75rem;
-  color: var(--lab-muted);
-}
+.post-date { font-size: 0.73rem; color: var(--stone); }
 .post-title {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  margin: 0 0 0.45rem; font-size: 0.98rem; font-weight: 600; color: var(--ink);
 }
 .post-content {
-  font-size: 0.85rem;
-  color: var(--lab-muted);
-  margin: 0 0 0.5rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 0.83rem; color: var(--stone); margin: 0 0 0.45rem;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .post-referral-info {
-  font-size: 0.8rem;
-  color: var(--el-color-success);
-  margin-bottom: 0.5rem;
+  font-size: 0.78rem; color: var(--moss); margin-bottom: 0.45rem;
 }
-.post-tags {
-  margin-bottom: 0.5rem;
-}
+.post-tags { margin-bottom: 0.45rem; }
 .post-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 0.45rem; border-top: 1px solid var(--el-border-color-extra-light);
 }
-.post-author {
-  font-size: 0.8rem;
-  color: var(--lab-muted);
-}
+.post-author { font-size: 0.78rem; color: var(--stone); }
 .post-actions {
   display: flex;
   gap: 0.25rem;

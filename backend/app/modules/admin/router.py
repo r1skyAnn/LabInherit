@@ -46,8 +46,13 @@ async def change_user_role(
     actor: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.update_user_role(db, user_id, payload.role, actor)
-    return {"detail": "ok"}
+    updated = await service.update_user_role(db, user_id, payload.role, actor)
+    from app.modules.notifications.service import create_notification
+    await create_notification(db, user_id=user_id, type="role_changed", payload={
+        "new_role": payload.role,
+        "changed_by": actor.display_name,
+    })
+    return {"detail": "ok", "display_name": updated.display_name}
 
 
 @router.post("/users/{user_id}/status", summary="变更用户状态")
@@ -57,5 +62,10 @@ async def change_user_status(
     actor: Annotated[User, Depends(require_owner)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict:
-    await service.update_user_status(db, user_id, payload.status, actor)
-    return {"detail": "ok"}
+    updated = await service.update_user_status(db, user_id, payload.status, actor)
+    from app.modules.notifications.service import create_notification
+    await create_notification(db, user_id=user_id, type="status_changed", payload={
+        "new_status": payload.status,
+        "changed_by": actor.display_name,
+    })
+    return {"detail": "ok", "display_name": updated.display_name}

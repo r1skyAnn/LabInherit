@@ -1,19 +1,31 @@
 """Background email worker — polls email_outbox and sends via SMTP.
 
-Integrated into FastAPI via lifespan, no separate process needed.
+Can run in two modes:
+1. Integrated into FastAPI via lifespan (automatic background task)
+2. Standalone process: python -m app.tasks.email_worker
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
+import signal
+import sys
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 
+# Minimal imports for the worker
 from app.core.config import settings
 from app.core.email import send_email
 from app.db.session import AsyncSessionLocal
+
+# Import models in the same order as alembic to avoid dependency issues
+from app.db import Base  # noqa: F401 - ensures metadata is initialized
+from app.modules.users.models import User, UserProfile  # noqa: F401 - needed for relationships
+from app.modules.invites.models import Invite  # noqa: F401 - needed for User relationship
+from app.modules.audit.models import AuditQueue  # noqa: F401 - needed for User relationship
 from app.modules.notifications.models import EmailOutbox
 
 logger = logging.getLogger("labinherit.email_worker")
@@ -91,3 +103,89 @@ async def run_worker(stop_event: asyncio.Event) -> None:
             pass
 
     logger.info("Email worker stopped.")
+
+
+def main() -> None:
+    """Standalone entry point for running the email worker as a separate process."""
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="LabInherit Email Worker - Background email sender",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python -m app.tasks.email_worker
+  python -m app.tasks.email_worker --interval 10 --batch-size 20
+  python -m app.tasks.email_worker --log-level DEBUG
+        """,
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=settings.EMAIL_WORKER_POLL_INTERVAL,
+        help=f"Polling interval in seconds (default: {settings.EMAIL_WORKER_POLL_INTERVAL})",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=settings.EMAIL_WORKER_BATCH_SIZE,
+        help=f"Batch size for processing emails (default: {settings.EMAIL_WORKER_BATCH_SIZE})",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level (default: INFO)",
+    )
+    
+    args = parser.parse_args()
+    
+    # Override settings with CLI args
+    settings.EMAIL_WORKER_POLL_INTERVAL = args.interval
+    settings.EMAIL_WORKER_BATCH_SIZE = args.batch_size
+    
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
+    
+    logger.info("=" * 60)
+    logger.info("LabInherit Email Worker v1.0")
+    logger.info("=" * 60)
+    logger.info("Starting in standalone mode...")
+    logger.info("Database: %s", settings.database_url.split("@")[-1])  # Hide password
+    logger.info("SMTP configured: %s", "yes" if settings.SMTP_HOST != "smtp.example.com" else "no (stdout mode)")
+    logger.info("Poll interval: %d seconds", args.interval)
+    logger.info("Batch size: %d", args.batch_size)
+    logger.info("Log level: %s", args.log_level)
+    logger.info("=" * 60)
+    
+    # Create stop event
+    stop_event = asyncio.Event()
+    
+    # Setup signal handlers for graceful shutdown
+    def signal_handler(signum: int, frame: object) -> None:
+        sig_name = signal.Signals(signum).name
+        logger.info("Received signal %s, shutting down gracefully...", sig_name)
+        stop_event.set()
+    
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    # Run the worker
+    try:
+        asyncio.run(run_worker(stop_event))
+    except KeyboardInterrupt:
+        logger.info("Interrupted by user")
+    except Exception as exc:
+        logger.exception("Fatal error: %s", exc)
+        sys.exit(1)
+    
+    logger.info("=" * 60)
+    logger.info("Email worker shutdown complete.")
+    logger.info("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

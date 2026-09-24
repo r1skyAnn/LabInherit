@@ -42,6 +42,15 @@ class Comment(Base):
     )
 
     author: Mapped["User"] = relationship("User")
+
+    @property
+    def author_name(self) -> str:
+        return self.author.display_name if self.author else ""
+
+    @property
+    def author_email(self) -> str:
+        return self.author.email if self.author else ""
+
     parent: Mapped["Comment | None"] = relationship("Comment", remote_side="Comment.id", backref="replies")
 
     __table_args__ = (

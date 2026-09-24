@@ -30,6 +30,10 @@ from app.modules.categories.models import Category  # noqa: F401
 from app.modules.notes.models import Note  # noqa: F401
 from app.modules.files.models import File, NoteAttachment  # noqa: F401
 from app.modules.guides.models import Guide, GuideAttachment  # noqa: F401
+from app.modules.comments.models import Comment  # noqa: F401
+from app.modules.notifications.models import Notification, EmailOutbox  # noqa: F401
+from app.modules.alumni_posts.models import AlumniPost  # noqa: F401
+from app.modules.showcase.models import ShowcaseItem  # noqa: F401
 
 config = context.config
 

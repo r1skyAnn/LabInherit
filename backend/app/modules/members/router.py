@@ -8,8 +8,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import require_active_member
+from app.core.deps import CurrentUser, require_active_member
 from app.db.session import get_db
+from app.modules.members import service
 from app.modules.members.schemas import MemberListResponse, MemberOut
 from app.modules.users.models import User
 
@@ -64,19 +65,34 @@ async def list_members(
     items = []
     for user in users:
         profile = profiles_map.get(user.id)
-        items.append(MemberOut(
-            id=user.id,
-            display_name=user.display_name,
-            email=user.email,
-            role=user.role,
-            status=user.status,
-            enrollment_year=profile.enrollment_year if profile else None,
-            graduation_year=profile.graduation_year if profile else None,
-            research_direction=profile.research_direction if profile else None,
-            current_affiliation=profile.current_affiliation if profile else None,
-            bio=profile.bio if profile else None,
-            last_login_at=user.last_login_at,
-            created_at=user.created_at,
-        ))
+        items.append(_member_out(user, profile))
 
     return MemberListResponse(items=items, total=total)
+
+
+def _member_out(user, profile=None) -> MemberOut:
+    p = profile or (user.profile if hasattr(user, 'profile') else None)
+    return MemberOut(
+        id=user.id,
+        display_name=user.display_name,
+        email=user.email,
+        role=user.role,
+        status=user.status,
+        enrollment_year=p.enrollment_year if p else None,
+        graduation_year=p.graduation_year if p else None,
+        research_direction=p.research_direction if p else None,
+        current_affiliation=p.current_affiliation if p else None,
+        bio=p.bio if p else None,
+        last_login_at=user.last_login_at,
+        created_at=user.created_at,
+    )
+
+
+@router.get("/{user_id}", response_model=MemberOut, summary="获取成员详情（成员及以上）")
+async def get_member(
+    user_id: int,
+    _: Annotated[User, Depends(require_active_member)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> MemberOut:
+    user = await service.get_member(db, user_id)
+    return _member_out(user)

@@ -22,7 +22,9 @@
 - **质量看板**：断代项目、热帖、失败邮件一览无遗
 - **Markdown 友好**：原生 MD 编辑，code/表格/公式一应俱全
 
-## 快速开始（5 步跑起来）
+## 快速开始
+
+### 本地开发（5 分钟）
 
 ```bash
 # 1. 克隆
@@ -32,7 +34,6 @@ cd labinherit
 # 2. 准备环境变量
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-cp deploy/.env.example deploy/.env
 
 # 3. 一键起服务
 cd deploy
@@ -45,6 +46,32 @@ docker compose ps   # 等 mysql 变 healthy
 # 前端：http://localhost:5173
 # 后端 API 文档：http://localhost:8000/docs
 ```
+
+### 生产部署（15 分钟）
+
+```bash
+# 1. 安装依赖（Ubuntu 22.04）
+sudo apt install -y python3.12 nodejs npm mysql-server nginx
+
+# 2. 配置数据库
+sudo mysql -e "CREATE DATABASE labinherit; CREATE USER 'labinherit'@'localhost' IDENTIFIED BY 'strong_password';"
+
+# 3. 克隆代码
+cd /opt && git clone <repo-url> labinherit && cd labinherit
+
+# 4. 配置环境变量
+cp backend/.env.production.example backend/.env
+nano backend/.env  # 修改 DB_PASSWORD、JWT_SECRET、SMTP_*
+
+# 5. 一键部署
+./deploy/deploy.sh
+
+# 6. 配置 Nginx + HTTPS
+sudo cp deploy/nginx/labinherit.conf /etc/nginx/sites-enabled/
+sudo certbot --nginx -d your-domain.com
+```
+
+**📖 完整部署指南：** [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | **🚀 快速清单：** [`docs/QUICKSTART_DEPLOY.md`](docs/QUICKSTART_DEPLOY.md)
 
 ## 技术栈
 
@@ -99,20 +126,52 @@ pnpm lint
 
 | 阶段 | 名称 | 状态 |
 |---|---|---|
-| S0 | 基础设施（monorepo + docker + CI + hello） | 🚧 进行中 |
-| S1 | 账号与权限 | ⏳ |
-| S2 | 项目与树状分类 | ⏳ |
-| S3 | 笔记核心 | ⏳ |
-| S4 | 评论 + 追问引擎 | ⏳ |
-| S5 | 看板与管理端 | ⏳ |
-| S6 | 打磨 | ⏳ |
+| S0 | 基础设施（monorepo + docker + CI + hello） | ✅ 完成 |
+| S1 | 账号与权限 | ✅ 完成 |
+| S2 | 项目与树状分类 | ✅ 完成 |
+| S3 | 笔记核心 | ✅ 完成 |
+| S4 | 评论 + 追问引擎 | ✅ 完成 |
+| S5 | 看板与管理端 | ✅ 完成 |
+| S6 | 打磨与部署 | ✅ 完成 |
+
+## 开发指南
+
+详细架构见 [`docs/superpowers/specs/2026-06-24-labinherit-architecture-design.md`](docs/superpowers/specs/2026-06-24-labinherit-architecture-design.md)  
+进度记录见 [`docs/PROGRESS.md`](docs/PROGRESS.md)
+
+### 测试账号（运行 seed 后）
+
+| 角色 | 邮箱 | 密码 |
+|------|------|------|
+| 导师 | owner@labinherit.local | Owner@123 |
+| 大师兄 | admin1@labinherit.local | Admin@123 |
+| 成员 | member1@labinherit.local | Member@123 |
+
+### 运维操作
+
+```bash
+# 查看服务状态
+sudo systemctl status labinherit-backend labinherit-worker
+
+# 查看日志
+sudo journalctl -u labinherit-backend -f
+
+# 备份数据库
+./deploy/backup-db.sh
+
+# 健康检查
+./deploy/healthcheck.sh
+
+# 更新代码
+git pull && ./deploy/deploy.sh
+```
 
 ## 贡献指南
 
 1. Fork → Feature Branch → PR
 2. 提交遵循 [Conventional Commits](https://www.conventionalcommits.org/)
 3. 后端 `ruff format` + `ruff check` 通过
-4. 前端 `pnpm lint` + `pnpm build` 通过
+4. 前端 `npm run lint` + `npm run build` 通过
 5. 测试覆盖新增逻辑
 
 ## License

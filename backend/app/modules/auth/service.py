@@ -42,17 +42,18 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> User:
         raise UnauthorizedError("邮箱或密码错误")
     if user.status != UserStatus.ACTIVE.value:
         raise PermissionDeniedError("账号已被停用或归档")
-    # Also gate on audit: user must have at least one approved record
-    # (admins created by seed bypass this since they get approved entries too)
+    # Registration-gate: non-owner users must have an approved audit record.
+    # Owners (created by seed or DB admin) skip this check.
     from app.modules.audit.models import AuditQueue  # avoid circular at module load
 
-    approved = await db.execute(
-        select(AuditQueue.id)
-        .where(AuditQueue.user_id == user.id, AuditQueue.status == AuditStatus.APPROVED.value)
-        .limit(1)
-    )
-    if approved.scalar_one_or_none() is None:
-        raise PermissionDeniedError("账号尚未通过审核，请联系管理员")
+    if user.role != "owner":
+        approved = await db.execute(
+            select(AuditQueue.id)
+            .where(AuditQueue.user_id == user.id, AuditQueue.status == AuditStatus.APPROVED.value)
+            .limit(1)
+        )
+        if approved.scalar_one_or_none() is None:
+            raise PermissionDeniedError("账号尚未通过审核，请联系管理员")
     return user
 
 

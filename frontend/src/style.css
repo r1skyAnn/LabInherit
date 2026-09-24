@@ -1,8 +1,57 @@
+/* ── Ember Design System ──────────────────────
+ * 薪火相传 — a warm, scholarly workshop
+ * ──────────────────────────────────────────── */
+
 :root {
-  --lab-bg: #fafbfc;
-  --lab-text: #1f2329;
-  --lab-muted: #8f959e;
-  --lab-primary: #409eff;
+  --ember:       #c2511a;
+  --ember-glow:  #e56832;
+  --ink:         #1e1e22;
+  --parchment:   #faf6ef;
+  --stone:       #6b6b70;
+  --moss:        #3d7251;
+  --glow:        #fef0e3;
+
+  /* Element Plus overrides */
+  --el-color-primary: #c2511a;
+  --el-color-primary-light-3: #d06d42;
+  --el-color-primary-light-5: #dd8c69;
+  --el-color-primary-light-7: #eaaf97;
+  --el-color-primary-light-8: #f0c7b5;
+  --el-color-primary-light-9: #f7dfd4;
+  --el-color-primary-dark-2: #a34415;
+  --el-color-success: #3d7251;
+  --el-color-warning: #c2802a;
+  --el-color-danger: #c2511a;
+  --el-bg-color: #fefdf9;
+  --el-bg-color-page: #faf6ef;
+  --el-text-color-primary: #1e1e22;
+  --el-text-color-regular: #3d3d42;
+  --el-text-color-secondary: #6b6b70;
+  --el-text-color-placeholder: #9d9da3;
+  --el-border-color: #dfd9ce;
+  --el-border-color-light: #e8e3d8;
+  --el-border-color-lighter: #efeae0;
+  --el-border-color-extra-light: #f3efe6;
+  --el-fill-color: #f5f0e7;
+  --el-fill-color-light: #faf6ef;
+  --el-fill-color-lighter: #fdfaf5;
+  --el-bg-color-overlay: #fefdf9;
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+  --el-font-size-base: 14px;
+
+  /* App-specific */
+  --lab-bg: var(--parchment);
+  --lab-text: var(--ink);
+  --lab-muted: var(--stone);
+  --lab-primary: var(--ember);
+  --lab-success: var(--moss);
+
+  font-family:
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Helvetica, Arial, sans-serif;
 }
 
 *,
@@ -12,20 +61,85 @@
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: var(--lab-text);
-  background: var(--lab-bg);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.003) 2px,
+      rgba(0,0,0,0.003) 4px
+    ),
+    var(--lab-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.7;
 }
 
 a {
   color: var(--lab-primary);
   text-decoration: none;
 }
+a:hover { text-decoration: underline; }
 
-a:hover {
-  text-decoration: underline;
+/* ── Scrollbar ───────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d5cfc5; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b5aea4; }
+
+/* ── Typography ──────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink); font-weight: 600; letter-spacing: -0.01em;
+}
+
+/* ── Card system — lab notebook paper slip ── */
+.lab-card {
+  background: #fefdf9;
+  border: none;
+  border-top: 1px solid #e8e3d6;
+  border-bottom: 1px solid #e8e3d6;
+  padding: 1.35rem 1.6rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.2s ease;
+  position: relative;
+}
+.lab-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: transparent; transition: background 0.2s ease;
+}
+.lab-card--accent { border-top-color: var(--ember); }
+.lab-card--accent::before { background: var(--ember); }
+.lab-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 16px rgba(0,0,0,0.06);
+  border-top-color: #dcd5c5;
+  border-bottom-color: #dcd5c5;
+}
+
+/* ── Section header ──────────────────────── */
+.lab-section-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 0.85rem; padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+}
+.lab-section-header h3 {
+  margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--ink);
+}
+
+/* ── Override Element Plus ───────────────── */
+.el-card {
+  border-radius: 0 !important;
+  border: none !important;
+  border-top: 1px solid #e8e3d6 !important;
+  border-bottom: 1px solid #e8e3d6 !important;
+  box-shadow: none !important;
+  background: #fefdf9 !important;
+}
+.el-dialog { border-radius: 6px !important; }
+.el-table {
+  --el-table-border-color: #e8e3d6;
+}
+.el-table th.el-table__cell {
+  background: #fefdf9; border-bottom: 2px solid #e8e3d6;
+  font-weight: 600; color: var(--ink);
 }

@@ -11,13 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
 from app.core.config import settings
-from app.core.exceptions import (
-    AppError,
-    app_error_handler,
-    unhandled_error_handler,
-    validation_error_handler,
-)
-from fastapi.exceptions import RequestValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +43,3 @@ def register_middlewares(app: FastAPI) -> None:
         )
         return response
 
-    # Exception handlers
-    app.add_exception_handler(AppError, app_error_handler)
-    app.add_exception_handler(RequestValidationError, validation_error_handler)
-    app.add_exception_handler(Exception, unhandled_error_handler)
